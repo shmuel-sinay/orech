@@ -1,0 +1,6 @@
+id=orech_m36_fixes
+name=אורך - תיקוני M36 Plus
+version=v1.0
+versionCode=1
+author=shmuel-sinay
+description=דוחף את כל הקבצים המתוקנים (SystemUI, Settings, PackageInstaller, services.jar) למקומם הנכון, ומסיר קבצים שצריכים להיעלם (wpa_supplicant, whatsapp), בכל עלייה.

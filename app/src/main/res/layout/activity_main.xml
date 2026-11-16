@@ -11,11 +11,24 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
+    <CheckBox
+        android:id="@+id/dryRunCheck"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="בדיקה בלבד - בלי להחזיר למכשיר" />
+
     <Button
         android:id="@+id/applyButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="בצע תיקונים מסומנים" />
+
+    <Button
+        android:id="@+id/shareLogButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="שלח את הלוג המלא" />
 
     <ScrollView
         android:layout_width="match_parent"

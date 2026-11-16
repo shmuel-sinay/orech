@@ -13,67 +13,97 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
 /**
- * מנוע כללי: מקבל Patch, מבצע פירוק->עריכת טקסט->הרכבה->חתימה->החזרה.
- *
- * הערה חשובה: זה נכתב לפי הידע שלי על ה-API הציבורי של smali/baksmali/apksig,
- * אבל לא קומפל ולא נבדק בפועל (אין לי יכולת להריץ כלי בנייה על קוד שעורך
- * אפליקציות מערכת). ייתכן שצריך להתאים שמות מתודות מדויקים כשתקמפלו את זה
- * ב-Android Studio ותראו שגיאות קומפילציה - אלה כנראה רק אי-התאמות API קטנות,
- * לא בעיה בעיקרון הכללי.
+ * מנוע כללי: מקבל Patch, מבצע פירוק->עריכת טקסט->הרכבה->חתימה->(אופציונלי) החזרה.
+ * כל שגיאה - כולל חריגה לא צפויה - נתפסת ונרשמת ללוג המלא, לא נופלת בשקט.
  */
-class PatchEngine(private val context: Context, private val workDir: File) {
+class PatchEngine(
+    private val context: Context,
+    private val workDir: File,
+    private val logger: Logger,
+    private val dryRun: Boolean
+) {
 
     fun apply(patch: Patch, log: (String) -> Unit): Boolean {
-        log("[${patch.id}] שולף את ${patch.targetFile}")
-        val localOriginal = File(workDir, "${patch.id}_original")
-        if (!RootShell.pull(patch.targetFile, localOriginal.absolutePath)) {
-            log("[${patch.id}] נכשל ב-pull"); return false
+        fun l(msg: String) {
+            log(msg)
+            logger.log("[${patch.id}] $msg")
         }
 
-        val dexFile = File(workDir, "${patch.id}_${patch.dexEntry}")
-        if (!extractEntry(localOriginal, patch.dexEntry, dexFile)) {
-            log("[${patch.id}] לא נמצא ${patch.dexEntry} בתוך הקובץ"); return false
+        return try {
+            l("שולף את ${patch.targetFile}")
+            val localOriginal = File(workDir, "${patch.id}_original")
+            val (pulled, pullLog) = RootShell.pull(patch.targetFile, localOriginal.absolutePath)
+            logger.log(pullLog)
+            if (!pulled) {
+                l("נכשל ב-pull - ראה את הלוג המלא לפרטים")
+                return false
+            }
+
+            val backupFile = File(context.getExternalFilesDir("backups"), "${patch.id}_${System.currentTimeMillis()}.orig")
+            backupFile.parentFile?.mkdirs()
+            localOriginal.copyTo(backupFile, overwrite = true)
+            l("גיבוי הקובץ המקורי נשמר ב: ${backupFile.absolutePath}")
+
+            val dexFile = File(workDir, "${patch.id}_${patch.dexEntry}")
+            if (!extractEntry(localOriginal, patch.dexEntry, dexFile)) {
+                l("לא נמצא ${patch.dexEntry} בתוך הקובץ - אולי המחלקה נמצאת בקובץ dex אחר")
+                return false
+            }
+
+            val smaliOutDir = File(workDir, "${patch.id}_smali").also { it.deleteRecursively(); it.mkdirs() }
+            l("מפרק ל-smali...")
+            val dex = DexFileFactory.loadDexFile(dexFile, Opcodes.getDefault())
+            Baksmali.disassembleDexFile(dex, smaliOutDir, 1, BaksmaliOptions())
+
+            val classRelPath = patch.className.removePrefix("L").removeSuffix(";") + ".smali"
+            val smaliFile = File(smaliOutDir, classRelPath)
+            if (!smaliFile.exists()) {
+                l("לא נמצא קובץ smali למחלקה ${patch.className}")
+                return false
+            }
+
+            l("מחליף את ${patch.methodName}...")
+            if (!replaceMethod(smaliFile, patch.methodName, patch.newMethodSmali)) {
+                l("לא נמצאה המתודה ${patch.methodName} בקובץ - לא בוצע שינוי")
+                return false
+            }
+
+            l("מרכיב מחדש ל-dex...")
+            val newDexFile = File(workDir, "${patch.id}_new.dex")
+            val smaliOptions = SmaliOptions()
+            smaliOptions.outputDexFile = newDexFile.absolutePath
+            val assembled = Smali.assemble(smaliOptions, listOf(smaliOutDir.absolutePath))
+            if (!assembled) {
+                l("הרכבה מחדש נכשלה")
+                return false
+            }
+
+            val patchedZip = File(workDir, "${patch.id}_patched.apk")
+            replaceEntryInZip(localOriginal, patchedZip, patch.dexEntry, newDexFile)
+
+            val signedZip = File(workDir, "${patch.id}_signed.apk")
+            l("חותם עם ${patch.signingKey}...")
+            if (!Signer.sign(context, patchedZip, signedZip, patch.signingKey)) {
+                l("חתימה נכשלה")
+                return false
+            }
+            l("קובץ חתום מוכן: ${signedZip.absolutePath} (${signedZip.length()} בייט)")
+
+            if (dryRun) {
+                l("מצב בדיקה בלבד - לא הוחזר למכשיר")
+                return true
+            }
+
+            l("מעביר בחזרה למכשיר...")
+            val (pushed, pushLog) = RootShell.push(signedZip.absolutePath, patch.targetFile, patch.remount)
+            logger.log(pushLog)
+            l(if (pushed) "הושלם בהצלחה" else "נכשל בהעברה חזרה - ראה את הלוג המלא")
+            pushed
+        } catch (e: Throwable) {
+            l("שגיאה לא צפויה: ${e.message}")
+            logger.log("[${patch.id}] EXCEPTION:\n${e.stackTraceToString()}")
+            false
         }
-
-        val smaliOutDir = File(workDir, "${patch.id}_smali").also { it.deleteRecursively(); it.mkdirs() }
-        log("[${patch.id}] מפרק ל-smali...")
-        val dex = DexFileFactory.loadDexFile(dexFile, Opcodes.getDefault())
-        val baksmaliOptions = BaksmaliOptions()
-        Baksmali.disassembleDexFile(dex, smaliOutDir, 1, baksmaliOptions)
-
-        val classRelPath = patch.className.removePrefix("L").removeSuffix(";") + ".smali"
-        val smaliFile = File(smaliOutDir, classRelPath)
-        if (!smaliFile.exists()) {
-            log("[${patch.id}] לא נמצא קובץ smali למחלקה ${patch.className}"); return false
-        }
-
-        log("[${patch.id}] מחליף את ${patch.methodName}...")
-        if (!replaceMethod(smaliFile, patch.methodName, patch.newMethodSmali)) {
-            log("[${patch.id}] לא נמצאה המתודה ${patch.methodName} בקובץ - לא בוצע שינוי"); return false
-        }
-
-        log("[${patch.id}] מרכיב מחדש ל-dex...")
-        val newDexFile = File(workDir, "${patch.id}_new.dex")
-        val smaliOptions = SmaliOptions()
-        smaliOptions.outputDexFile = newDexFile.absolutePath
-        val ok = Smali.assemble(smaliOptions, listOf(smaliOutDir.absolutePath))
-        if (!ok) {
-            log("[${patch.id}] הרכבה מחדש נכשלה"); return false
-        }
-
-        val patchedZip = File(workDir, "${patch.id}_patched.apk")
-        replaceEntryInZip(localOriginal, patchedZip, patch.dexEntry, newDexFile)
-
-        val signedZip = File(workDir, "${patch.id}_signed.apk")
-        log("[${patch.id}] חותם עם ${patch.signingKey}...")
-        if (!Signer.sign(context, patchedZip, signedZip, patch.signingKey)) {
-            log("[${patch.id}] חתימה נכשלה"); return false
-        }
-
-        log("[${patch.id}] מעביר בחזרה למכשיר...")
-        val ok2 = RootShell.push(signedZip.absolutePath, patch.targetFile, patch.remount)
-        log("[${patch.id}] ${if (ok2) "הושלם" else "נכשל"}")
-        return ok2
     }
 
     private fun extractEntry(zipFile: File, entryName: String, outFile: File): Boolean {

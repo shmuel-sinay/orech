@@ -1,0 +1,24 @@
+[
+  {
+    "id": "recent_apps_limit",
+    "title": "ביטול מגבלת 3 אפליקציות אחרונות (M36 Plus)",
+    "targetFile": "/system/system/framework/services.jar",
+    "remount": "/system",
+    "dexEntry": "classes2.dex",
+    "className": "Lcom/android/server/wm/RecentTasks;",
+    "methodName": "checkRecentTask",
+    "newMethodSmali": ".method private checkRecentTask()V\n    .registers 1\n\n    return-void\n.end method",
+    "signingKey": "platform"
+  },
+  {
+    "id": "keyguard_backdoor",
+    "title": "הסרת דלת אחורית (תבנית Z הפוך) מנעילת המסך",
+    "targetFile": "/system/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk",
+    "remount": "/system",
+    "dexEntry": "classes.dex",
+    "className": "Lcom/android/keyguard/KeyguardPatternViewController$UnlockPatternListener;",
+    "methodName": "onPatternDetected",
+    "newMethodSmali": "__TODO_NEEDS_FULL_METHOD_BODY__",
+    "signingKey": "testkey"
+  }
+]

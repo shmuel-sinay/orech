@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
 
         list.adapter = ArrayAdapter(
             this, android.R.layout.simple_list_item_multiple_choice,
-            patches.map { it.title }
+            patches.map { "[${it.device}] ${it.title}" }
         )
         list.choiceMode = ListView.CHOICE_MODE_MULTIPLE
 

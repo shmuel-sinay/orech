@@ -57,4 +57,31 @@ object RootShell {
         val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" }
         return ok to log
     }
+
+    fun deleteFile(remotePath: String, remount: String): Pair<Boolean, String> {
+        val results = exec(
+            "mount -o remount,rw $remount",
+            "rm -f '$remotePath'"
+        )
+        val ok = results.all { it.second == 0 }
+        val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" }
+        return ok to log
+    }
+
+    fun exists(remotePath: String): Boolean {
+        val results = exec("[ -e '$remotePath' ]")
+        return results.lastOrNull()?.second == 0
+    }
+
+    fun putSetting(namespace: String, key: String, value: String): Pair<Boolean, String> {
+        val results = exec(
+            "settings put $namespace $key $value",
+            "settings get $namespace $key"
+        )
+        val actual = results.last().third.trim()
+        val ok = actual == value
+        val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" } +
+            "\nנדרש reboot מלא כדי שהערך ישפיע בפועל."
+        return ok to log
+    }
 }

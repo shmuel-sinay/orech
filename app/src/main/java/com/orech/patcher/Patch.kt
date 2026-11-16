@@ -3,27 +3,49 @@ package com.orech.patcher
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** עריכה בודדת בתוך dex אחד: או החלפת מתודה קיימת, או כתיבת קובץ smali שלם (גם למחלקה חדשה). */
+data class Edit(
+    val kind: String, // "method" | "class"
+    val className: String, // לדוגמה Lcom/android/server/wm/RecentTasks;
+    val methodName: String? = null, // ל-kind=method
+    val newMethodSmali: String? = null, // ל-kind=method
+    val newClassSmali: String? = null // ל-kind=class
+) {
+    companion object {
+        fun fromJson(o: JSONObject) = Edit(
+            kind = o.getString("kind"),
+            className = o.getString("className"),
+            methodName = o.optString("methodName").ifEmpty { null },
+            newMethodSmali = o.optString("newMethodSmali").ifEmpty { null },
+            newClassSmali = o.optString("newClassSmali").ifEmpty { null }
+        )
+    }
+}
+
 /**
- * תיאור כללי של עריכה אחת - לא קוד קשיח. להוסיף תיקון עתידי = להוסיף אובייקט
- * כזה ל-assets/patches/patches.json, בלי לגעת בקוד של האפליקציה בכלל.
+ * תיאור כללי של תיקון אחד - לא קוד קשיח. להוסיף תיקון עתידי = להוסיף אובייקט
+ * כזה ל-assets/patches/patches.json, בלי לגעת בקוד של האפליקציה.
+ *
+ * kind:
+ *  - "edit"    - פירוק/עריכה/הרכבה/חתימה/החזרה של קובץ apk/jar (צריך edits + signingKey)
+ *  - "delete"  - מחיקת קובץ מהמכשיר (צריך targetFile+remount, גיבוי אוטומטי לפני מחיקה)
+ *  - "setting" - שינוי ערך ב-Settings (settings put) - לא נוגע בשום קובץ
+ *  - "info"    - לא מבצע שום פעולה במכשיר, רק מציג הוראות/הערות למשתמש
  */
 data class Patch(
     val id: String,
     val title: String,
-    /** נתיב על המכשיר לקובץ שצריך לערוך (apk/jar) */
-    val targetFile: String,
-    /** איזה partition לעשות לו remount,rw לפני כתיבה בחזרה (/system, /vendor וכו') */
-    val remount: String,
-    /** איזה classes*.dex בתוך הקובץ (בד"כ "classes.dex" או "classes2.dex") */
-    val dexEntry: String,
-    /** שם המחלקה המלא בפורמט smali, לדוגמה Lcom/android/server/wm/RecentTasks; */
-    val className: String,
-    /** שם המתודה שצריך להחליף */
-    val methodName: String,
-    /** תוכן ה-smali החדש של המתודה כולה (כולל .method/.end method) */
-    val newMethodSmali: String,
-    /** שם מפתח החתימה לשימוש (קובץ ב-assets/keys/, בלי סיומת) */
-    val signingKey: String
+    val kind: String,
+    val device: String, // "M36 Plus" / "M393" / "כל המכשירים"
+    val targetFile: String? = null,
+    val remount: String? = null,
+    val signingKey: String? = null,
+    val edits: List<Edit> = emptyList(),
+    val settingNamespace: String? = null,
+    val settingKey: String? = null,
+    val settingValue: String? = null,
+    val infoText: String? = null,
+    val note: String? = null // אזהרה/הערת ביטחון שתוצג למשתמש
 ) {
     companion object {
         fun loadAll(json: String): List<Patch> {
@@ -31,17 +53,26 @@ data class Patch(
             val out = mutableListOf<Patch>()
             for (i in 0 until arr.length()) {
                 val o: JSONObject = arr.getJSONObject(i)
+                val editsArr = o.optJSONArray("edits")
+                val edits = mutableListOf<Edit>()
+                if (editsArr != null) {
+                    for (j in 0 until editsArr.length()) edits.add(Edit.fromJson(editsArr.getJSONObject(j)))
+                }
                 out.add(
                     Patch(
                         id = o.getString("id"),
                         title = o.getString("title"),
-                        targetFile = o.getString("targetFile"),
-                        remount = o.getString("remount"),
-                        dexEntry = o.getString("dexEntry"),
-                        className = o.getString("className"),
-                        methodName = o.getString("methodName"),
-                        newMethodSmali = o.getString("newMethodSmali"),
-                        signingKey = o.getString("signingKey")
+                        kind = o.getString("kind"),
+                        device = o.optString("device", "M36 Plus"),
+                        targetFile = o.optString("targetFile").ifEmpty { null },
+                        remount = o.optString("remount").ifEmpty { null },
+                        signingKey = o.optString("signingKey").ifEmpty { null },
+                        edits = edits,
+                        settingNamespace = o.optString("settingNamespace").ifEmpty { null },
+                        settingKey = o.optString("settingKey").ifEmpty { null },
+                        settingValue = o.optString("settingValue").ifEmpty { null },
+                        infoText = o.optString("infoText").ifEmpty { null },
+                        note = o.optString("note").ifEmpty { null }
                     )
                 )
             }

@@ -5,6 +5,7 @@ import com.android.apksig.ApkSigner
 import java.io.File
 import java.security.KeyFactory
 import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 
 /** חותם APK עם אחד מהמפתחות שמגיעים עם האפליקציה (assets/keys/<name>.pk8 + .x509.pem). */
@@ -19,7 +20,7 @@ object Signer {
             val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(pk8Bytes))
 
             val cert = CertificateFactory.getInstance("X.509")
-                .generateCertificate(certBytes.inputStream())
+                .generateCertificate(certBytes.inputStream()) as X509Certificate
 
             val signerConfig = ApkSigner.SignerConfig.Builder(
                 keyName, privateKey, listOf(cert)

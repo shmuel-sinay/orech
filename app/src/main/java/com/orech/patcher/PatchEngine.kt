@@ -55,7 +55,8 @@ class PatchEngine(private val context: Context, private val workDir: File) {
         log("[${patch.id}] מרכיב מחדש ל-dex...")
         val newDexFile = File(workDir, "${patch.id}_new.dex")
         val smaliOptions = SmaliOptions()
-        val ok = Smali.assemble(smaliOptions, listOf(smaliOutDir.absolutePath), newDexFile.absolutePath)
+        smaliOptions.outputDexFile = newDexFile.absolutePath
+        val ok = Smali.assemble(smaliOptions, listOf(smaliOutDir.absolutePath))
         if (!ok) {
             log("[${patch.id}] הרכבה מחדש נכשלה"); return false
         }

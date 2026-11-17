@@ -1,41 +1,55 @@
-# אורך — מודול Magisk לכל תיקוני M36 Plus
+# אורך (orech)
 
-## איך זה עובד
-1. דוחף קבצים (מה-`system/` בתוך המודול) ל-`/system` באופן "systemless" (overlay של Magisk,
-   לא עריכה ישירה של המחיצה).
-2. מוחק קבצים שצריכים להיעלם (`post-fs-data.sh`) בכל עלייה.
+אפליקציית אנדרואיד רגילה (לא מודול Magisk) שמריצה בעצמה, בזמן אמת, עם root,
+את כל התהליך: שליפת קובץ apk/jar ממערכת → פירוק ל-smali → עריכה → הרכבה
+מחדש → חתימה → החזרה בחזרה למכשיר. כל תיקון מוגדר כאובייקט JSON ב-
+`app/src/main/assets/patches/patches.json` - להוסיף תיקון עתידי לא דורש
+לגעת בקוד של האפליקציה.
 
-## מה **עדיין חסר** — זה לא "בונה בעצמו"
-המודול הזה הוא רק **מנגנון ההפצה**. הוא **לא** מפרק/עורך/חותם שום דבר בעצמו.
-את הקבצים המתוקנים עצמם (אלה שכבר ערכת ב-MT Manager) צריך **אתה** לשים בתיקיות
-הנכונות, לפני שאורזים את המודול לזיפ ומתקינים.
+## התקנה
+כל push ל-`main` מריץ build אוטומטי ב-GitHub Actions ומייצר:
+- artifact רגיל (`orech-debug-apk`) בעמוד ה-Actions run - **נמחק אחרי כמה חודשים**.
+- Release קבוע (עם תג `build-<תאריך>-<sha>`) בעמוד [Releases](../../releases) - **לא נמחק**.
 
-## איפה לשים כל קובץ מתוקן
+מורידים את `app-debug.apk` מה-Release האחרון, מתקינים במכשיר עם root.
 
-| קובץ מתוקן | איפה לשים בתוך המודול |
-|---|---|
-| `MtkSystemUI.apk` (Z הפוך + icon_blacklist + QS tiles) | `system/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk` |
-| `MtkSettings.apk` (שורות WiFi) | `system/system/system_ext/priv-app/MtkSettings/MtkSettings.apk` |
-| `GooglePackageInstaller.apk` (נעילת סיסמה) | `system/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk` |
-| `services.jar` (מגבלת 3 אפליקציות — **רק M36 Plus**, לא M393) | `system/system/framework/services.jar` |
+## שימוש באפליקציה
+1. בוחרים תיקון/ים מהרשימה (מתויגים לפי מכשיר - `[M36 Plus]` / `[M393]`).
+2. "בדיקה בלבד" מסומן כברירת מחדל - מריץ את כל התהליך (כולל חתימה) בלי
+   לכתוב בחזרה למכשיר. מומלץ להתחיל כך.
+3. לוחצים "בצע תיקונים מסומנים".
+4. "שלח את הלוג המלא" - משתף את קובץ הלוג (כולל stack trace מלא בכל שגיאה)
+   דרך תפריט השיתוף הרגיל, לבדיקה/התייעצות.
+5. אם צריך לחזור אחורה: "שחזור מגיבוי" - האפליקציה שומרת גיבוי אוטומטי של
+   כל קובץ *לפני* שהיא נוגעת בו, ברשימה לבחירה.
 
-(התיקיות כבר קיימות בריפו, ריקות — פשוט להעתיק/לדחוף אליהן את הקובץ המתאים.)
-
-## מה נמחק אוטומטית בכל עלייה (`post-fs-data.sh`)
-- `wpa_supplicant` מ-`/vendor/bin/hw/` — מנטרל WiFi לגמרי (לא רק מסתיר).
-- `whatsapp.apk` מ-`/system/system/preinstall/` — כדי שלא יחזור אחרי איפוס.
-
-## סיכום כל תיקון, עם המקור בשיחה
-| תיקון | קובץ | מתודה/מיקום | סטטוס |
+## רשימת התיקונים (נכון לכתיבת השורות האלה)
+| תיקון | מכשיר | סוג | סטטוס |
 |---|---|---|---|
-| Z הפוך (דלת אחורית של היצרן) | MtkSystemUI.apk | `KeyguardPatternViewController$UnlockPatternListener.onPatternDetected` | מתועד, לא בוצע עדיין |
-| הסתרת/ניטרול WiFi | MtkSystemUI.apk + מחיקת wpa_supplicant | `config_statusBarIconsToExclude`, `quick_settings_tiles_default` | בוצע |
-| הסרת שורות WiFi מהגדרות | MtkSettings.apk | `top_level_settings.xml`, `network_and_internet.xml`, `network_provider_settings.xml` | בוצע |
-| נעילת סיסמה להתקנות | GooglePackageInstaller.apk | `InstallStart` + 2 מחלקות חדשות | מתועד, מוכן |
-| מגבלת 3 אפליקציות אחרונות | services.jar | `RecentTasks.checkRecentTask` | בוצע ומאומת |
-| מחיקת WhatsApp קבועה | preinstall/whatsapp.apk | — | בסקריפט המודול |
+| ביטול מגבלת 3 אפליקציות אחרונות | M36 Plus | עריכת dex | מאומת על קובץ אמיתי |
+| ביטול WiFi (מחיקת wpa_supplicant) | M36 Plus | מחיקת קובץ | נבדק בפועל על המכשיר |
+| הסרת WhatsApp המובנה | M36 Plus | מחיקת קובץ | מוכן |
+| הסתרת סמלי WiFi/סלולר/cast משורת הסטטוס | M36 Plus | הגדרת Settings | מוכן, לא נוגע בקבצים |
+| חסימת התקנות בסיסמה ("תודה להשם") | M36 Plus | עריכת dex (4 מחלקות) | smali מאומת, עדיין לא נבדק במנוע האוטומטי בפועל |
+| הסרת דלת אחורית בנעילה (תבנית Z הפוכה) | M36 Plus | עריכת dex | חולץ וה-smali אומת ב-round-trip, עדיין לא נבדק בפועל |
+| תיקון באג "adb פתוח תמיד" | M393 | עריכת dex | ה-smali מוכן, נתיב הקובץ במכשיר עדיין לא אומת |
+| הסרת שורת WiFi מהגדרות | M36 Plus | info בלבד | דורש apktool על PC - ראו `docs/wifi_row_removal_README.md` |
 
-## התקנה (במכשיר שכבר יש לו את כל הקבצים המתוקנים בפנים)
-1. לארוז את כל תוכן הריפו לקובץ zip (לא את תיקיית `.git`).
-2. Magisk → מודולים → התקן מ-Zip → לבחור את הקובץ.
-3. הפעלה מחדש.
+## מבנה הריפו
+- `app/` - קוד האפליקציה (Kotlin).
+- `app/src/main/assets/patches/patches.json` - **נוצר אוטומטית**, אין לערוך ביד.
+- `tools/reference_smali/` - קבצי ה-smali האמיתיים של כל תיקון, בנפרד - כאן עורכים.
+- `tools/build_patches_json.py` - בונה את `patches.json` מתוך `reference_smali/`.
+  להרצה אחרי כל שינוי: `python3 tools/build_patches_json.py`.
+- `tools/extract_method.py` - חילוץ קריאה-בלבד של מתודה בודדת מ-APK/JAR אמיתי
+  (עם androguard) - לקבלת ה-instructions הגולמיים לפני כתיבת smali תחליף ביד.
+- `tools/verify_smali.sh` - בודק הרכבה+פירוק (round-trip) של smali לפני שסומכים
+  עליו - על dex זמני ומבודד, בלי לגעת בשום קובץ אמיתי.
+- `docs/` - הערות ניתוח/תהליכים ששימשו להגיע לכל תיקון (כולל כאלה שלא מתאימים
+  למנוע האוטומטי, כמו עריכות resources.arsc/AXML שדורשות apktool על PC).
+
+## אזהרת בטיחות
+שום תיקון שמשנה בפועל קובץ אמיתי לא בוצע כאן עלי בתהליך הכתיבה - כל עריכת
+smali אומתה בנפרד (הרכבה+פירוק על dex מבודד, או test קודם שנעשה ידנית ב-MT
+Manager), אבל השרשרת האוטומטית המלאה (פירוק→עריכה→הרכבה→חתימה→החזרה בתוך
+האפליקציה עצמה) היא חדשה ולא נבדקה על כל התיקונים. להתחיל תמיד ב"בדיקה בלבד".

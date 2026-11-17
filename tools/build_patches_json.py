@@ -99,7 +99,7 @@ patches = [
                 "newClassSmali": read("installstart-blockedclicklistener.smali"),
             },
         ],
-        "note": "מקור: פאץ' מהפורום (קרדיט למשתמש בסדבסד), שהורחב בשיחה הזו עם מסך חסימה + 7 הקשות לחשיפת שדה הסיסמה, והסיסמה שונתה ל\"תודה להשם\". זוהי החלפת קבצי smali שלמים (כולל שלוש מחלקות פנימיות חדשות), לא רק מתודה בודדת. מפתח החתימה platform נבחר כי GooglePackageInstaller הוא priv-app שחולק הרשאות ברמת platform - לא אומת ב-100% איזה מפתח חתם בפועל על ההתקנה המקורית.",
+        "note": "מקור: פאץ' מהפורום (קרדיט למשתמש בסדבסד), שהורחב בשיחה הזו עם מסך חסימה + 7 הקשות לחשיפת שדה הסיסמה, והסיסמה שונתה ל\"תודה להשם\". זוהי החלפת קבצי smali שלמים (כולל שלוש מחלקות פנימיות חדשות), לא רק מתודה בודדת. בדקתי ישירות: המפתח האמיתי שחתם על GooglePackageInstaller.apk במקור הוא לא testkey/platform/shared/media (ארבעת מפתחות AOSP הסטנדרטיים) - כנראה מפתח ייחודי ל-MediaTek/OEM שאין לי גישה אליו. זה בסדר כאן: ה-APK לא מגדיר sharedUserId (אין צורך בחתימה תואמת לאפליקציה אחרת), אז חתימה עם platform אמורה לעבוד תפקודית גם אם היא לא זהה למקור.",
     },
     {
         "id": "m393_adb_always_on_fix",
@@ -126,7 +126,7 @@ patches = [
         "device": "M36 Plus",
         "targetFile": "/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk",
         "remount": "/",
-        "signingKey": "testkey",
+        "signingKey": "platform",
         "expectedSha256": "394d23cfcfdbac31de1aeca9d02d276928b54f8106e93fc6b3d4909067ca9ba4",
         "edits": [
             {
@@ -141,9 +141,12 @@ patches = [
             "androguard, בלי לבנות/לחתום/להעביר כלום בעצמי - ראו tools/extract_method.py), "
             "אומתה שהבלוק של '9875321'/persist.sys.secret הוא אכן הדלת האחורית (לפי "
             "מתמטיקת ה-offsets האמיתית של הקפיצות), והוחלפה ב-smali שנבדק בהרכבה+פירוק "
-            "מלאה (round-trip, ראו tools/verify_smali.sh) על dex נפרד - לא נבדק עדיין "
-            "בפועל על המכשיר. מפתח החתימה testkey נבחר לפי האפיון הקודם של המכשיר - "
-            "לא נבדק ספציפית על הקובץ הזה."
+            "מלאה (round-trip, ראו tools/verify_smali.sh) על dex נפרד - נכשל בפועל "
+            "במכשיר (SystemUI בלופ קריסות) כש-signingKey היה testkey. אומת ישירות "
+            "(השוואת SHA-256 של המפתח האמיתי בתוך MtkSystemUI.apk) ש-platform הוא "
+            "המפתח הנכון - וש-MtkSystemUI.apk מגדיר sharedUserId=android.uid.systemui, "
+            "כך שחתימה לא תואמת גורמת לאובדן הרשאות ברמת signature ולקריסה. "
+            "signingKey תוקן ל-platform."
         ),
     },
     {

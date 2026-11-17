@@ -19,7 +19,14 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var patches: List<Patch>
     private val selected = mutableSetOf<String>()
-    private var lastLogger: Logger? = null
+
+    // מופע יחיד לכל חיי המסך - לא נוצר מחדש בכל לחיצה, כדי ש-commit() יוכל
+    // להשתמש במה שכבר נבדק ב"בדיקה בלבד" קודמת, וכדי שהלוג יהיה רציף.
+    private val logger: Logger by lazy { Logger(this) }
+    private val engine: PatchEngine by lazy {
+        val workDir = File(getExternalFilesDir(null), "patchwork").also { it.mkdirs() }
+        PatchEngine(this, workDir, logger)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,8 +38,10 @@ class MainActivity : AppCompatActivity() {
         val list = findViewById<ListView>(R.id.patchList)
         val logView = findViewById<TextView>(R.id.logView)
         val applyButton = findViewById<Button>(R.id.applyButton)
+        val commitButton = findViewById<Button>(R.id.commitButton)
         val dryRunCheck = findViewById<CheckBox>(R.id.dryRunCheck)
         val shareLogButton = findViewById<Button>(R.id.shareLogButton)
+        val restoreButton = findViewById<Button>(R.id.restoreButton)
 
         list.adapter = ArrayAdapter(
             this, android.R.layout.simple_list_item_multiple_choice,
@@ -40,22 +49,23 @@ class MainActivity : AppCompatActivity() {
         )
         list.choiceMode = ListView.CHOICE_MODE_MULTIPLE
 
-        applyButton.setOnClickListener {
+        fun currentSelection(): List<Patch> {
             selected.clear()
             for (i in patches.indices) {
                 if (list.isItemChecked(i)) selected.add(patches[i].id)
             }
+            return patches.filter { it.id in selected }
+        }
+
+        applyButton.setOnClickListener {
+            val toRun = currentSelection()
             val dryRun = dryRunCheck.isChecked
-            val logger = Logger(this)
-            lastLogger = logger
             logView.text = "מתחיל... (${if (dryRun) "מצב בדיקה בלבד" else "מצב אמיתי - כותב למכשיר!"})\n"
-            logger.log("=== הפעלה: dryRun=$dryRun, patches=$selected ===")
+            logger.log("=== apply: dryRun=$dryRun, patches=${toRun.map { it.id }} ===")
 
             thread {
-                val workDir = File(getExternalFilesDir(null), "patchwork").also { it.mkdirs() }
-                val engine = PatchEngine(this, workDir, logger, dryRun)
-                for (patch in patches.filter { it.id in selected }) {
-                    engine.apply(patch) { line ->
+                for (patch in toRun) {
+                    engine.apply(patch, dryRun) { line ->
                         runOnUiThread { logView.append(line + "\n") }
                     }
                 }
@@ -65,16 +75,29 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        commitButton.setOnClickListener {
+            val toRun = currentSelection()
+            logView.text = "מחיל בפועל את מה שעבר בדיקה...\n"
+            logger.log("=== commit: patches=${toRun.map { it.id }} ===")
+
+            thread {
+                for (patch in toRun) {
+                    engine.commit(patch) { line ->
+                        runOnUiThread { logView.append(line + "\n") }
+                    }
+                }
+                runOnUiThread { logView.append("סיום.\n") }
+            }
+        }
+
         shareLogButton.setOnClickListener {
-            val logger = lastLogger
-            if (logger == null || !logger.file.exists()) {
+            if (!logger.file.exists()) {
                 logView.append("אין עדיין לוג לשלוח - תריץ תיקון קודם.\n")
             } else {
                 startActivity(Intent.createChooser(logger.shareIntent(), "שליחת לוג"))
             }
         }
 
-        val restoreButton = findViewById<Button>(R.id.restoreButton)
         restoreButton.setOnClickListener { showRestoreDialog(logView) }
     }
 
@@ -110,11 +133,8 @@ class MainActivity : AppCompatActivity() {
                     .setTitle("לשחזר?")
                     .setMessage("זה יכתוב את ${f.name} בחזרה אל $targetFile. להמשיך?")
                     .setPositiveButton("שחזר") { _, _ ->
-                        val logger = lastLogger ?: Logger(this).also { lastLogger = it }
                         logView.append("משחזר...\n")
                         thread {
-                            val workDir = File(getExternalFilesDir(null), "patchwork").also { it.mkdirs() }
-                            val engine = PatchEngine(this, workDir, logger, dryRun = false)
                             engine.restore(f, targetFile, remount) { line ->
                                 runOnUiThread { logView.append(line + "\n") }
                             }

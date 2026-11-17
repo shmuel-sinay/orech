@@ -25,6 +25,12 @@
         android:text="בצע תיקונים מסומנים" />
 
     <Button
+        android:id="@+id/commitButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="החל בפועל את מה שעבר בדיקה" />
+
+    <Button
         android:id="@+id/shareLogButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

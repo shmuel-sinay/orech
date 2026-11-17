@@ -13,18 +13,27 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
+/** פעולה אמיתית שנשארה "ממתינה" אחרי ריצה מוצלחת ב"בדיקה בלבד" - כדי ש-commit() יוכל לבצע אותה בלי לחזור על כל הצנרת (pull/פירוק/עריכה/הרכבה/חתימה/אימות). */
+private sealed class PendingCommit {
+    data class PushFile(val localFile: File, val remotePath: String, val remount: String) : PendingCommit()
+    data class DeleteFile(val remotePath: String, val remount: String) : PendingCommit()
+    data class PutSetting(val namespace: String, val key: String, val value: String) : PendingCommit()
+}
+
 /**
  * מנוע כללי: מקבל Patch ומבצע את הפעולה המתאימה ל-kind שלו.
  * כל שגיאה - כולל חריגה לא צפויה - נתפסת ונרשמת ללוג המלא, לא נופלת בשקט.
+ * מופע אחד חי לכל חיי ה-Activity (לא נוצר מחדש בכל לחיצה), כדי ש-commit()
+ * יוכל להסתמך על מה שכבר הוכן ונבדק ב"בדיקה בלבד" הקודמת.
  */
 class PatchEngine(
     private val context: Context,
     private val workDir: File,
-    private val logger: Logger,
-    private val dryRun: Boolean
+    private val logger: Logger
 ) {
+    private val pending = mutableMapOf<String, PendingCommit>()
 
-    fun apply(patch: Patch, log: (String) -> Unit): Boolean {
+    fun apply(patch: Patch, dryRun: Boolean, log: (String) -> Unit): Boolean {
         fun l(msg: String) {
             log(msg)
             logger.log("[${patch.id}] $msg")
@@ -38,9 +47,9 @@ class PatchEngine(
                     l(patch.infoText ?: "(אין טקסט הסברה)")
                     true
                 }
-                "setting" -> applySetting(patch, ::l)
-                "delete" -> applyDelete(patch, ::l)
-                "edit" -> applyEdit(patch, ::l)
+                "setting" -> applySetting(patch, dryRun, ::l)
+                "delete" -> applyDelete(patch, dryRun, ::l)
+                "edit" -> applyEdit(patch, dryRun, ::l)
                 else -> {
                     l("סוג תיקון לא מוכר: ${patch.kind}")
                     false
@@ -53,12 +62,55 @@ class PatchEngine(
         }
     }
 
-    private fun applySetting(patch: Patch, l: (String) -> Unit): Boolean {
+    /**
+     * מבצע בפועל פעולה שנשארה ממתינה מריצת "בדיקה בלבד" קודמת - בלי לחזור על
+     * pull/פירוק/עריכה/הרכבה/חתימה/אימות. אם אין פעולה ממתינה (לא רץ עדיין
+     * "בדיקה בלבד" בהצלחה על התיקון הזה) - נכשל עם הודעה ברורה.
+     */
+    fun commit(patch: Patch, log: (String) -> Unit): Boolean {
+        fun l(msg: String) {
+            log(msg)
+            logger.log("[${patch.id}] $msg")
+        }
+
+        val p = pending[patch.id] ?: return false.also {
+            l("אין פעולה ממתינה לתיקון הזה - צריך להריץ קודם ב'בדיקה בלבד' בהצלחה")
+        }
+
+        val result = when (p) {
+            is PendingCommit.PushFile -> {
+                l("מעביר בחזרה למכשיר (מהריצה הקודמת שעברה בדיקה)...")
+                val (ok, out) = RootShell.push(p.localFile.absolutePath, p.remotePath, p.remount)
+                logger.log(out)
+                l(if (ok) "הושלם בהצלחה" else "נכשל בהעברה חזרה - ראה את הלוג המלא")
+                ok
+            }
+            is PendingCommit.DeleteFile -> {
+                l("מוחק בפועל (מהריצה הקודמת שעברה בדיקה)...")
+                val (ok, out) = RootShell.deleteFile(p.remotePath, p.remount)
+                logger.log(out)
+                l(if (ok) "הושלם" else "נכשל - ראה את הלוג המלא")
+                ok
+            }
+            is PendingCommit.PutSetting -> {
+                l("קובע settings בפועל...")
+                val (ok, out) = RootShell.putSetting(p.namespace, p.key, p.value)
+                logger.log(out)
+                l(if (ok) "הושלם - נדרש reboot מלא כדי שהשינוי ישפיע" else "נכשל - ראה את הלוג המלא")
+                ok
+            }
+        }
+        if (result) pending.remove(patch.id)
+        return result
+    }
+
+    private fun applySetting(patch: Patch, dryRun: Boolean, l: (String) -> Unit): Boolean {
         val ns = patch.settingNamespace ?: return false.also { l("חסר settingNamespace") }
         val key = patch.settingKey ?: return false.also { l("חסר settingKey") }
         val value = patch.settingValue ?: return false.also { l("חסר settingValue") }
         if (dryRun) {
             l("מצב בדיקה בלבד - לא משנה settings. הפקודה שתרוץ: settings put $ns $key $value")
+            pending[patch.id] = PendingCommit.PutSetting(ns, key, value)
             return true
         }
         l("קובע $ns/$key = $value ...")
@@ -68,7 +120,7 @@ class PatchEngine(
         return ok
     }
 
-    private fun applyDelete(patch: Patch, l: (String) -> Unit): Boolean {
+    private fun applyDelete(patch: Patch, dryRun: Boolean, l: (String) -> Unit): Boolean {
         val target = patch.targetFile ?: return false.also { l("חסר targetFile") }
         val remount = patch.remount ?: return false.also { l("חסר remount") }
 
@@ -88,6 +140,7 @@ class PatchEngine(
 
         if (dryRun) {
             l("מצב בדיקה בלבד - לא נמחק בפועל. היה נמחק: $target")
+            pending[patch.id] = PendingCommit.DeleteFile(target, remount)
             return true
         }
 
@@ -98,7 +151,7 @@ class PatchEngine(
         return ok
     }
 
-    private fun applyEdit(patch: Patch, l: (String) -> Unit): Boolean {
+    private fun applyEdit(patch: Patch, dryRun: Boolean, l: (String) -> Unit): Boolean {
         val target = patch.targetFile ?: return false.also { l("חסר targetFile") }
         val remount = patch.remount ?: return false.also { l("חסר remount") }
         val signingKey = patch.signingKey ?: return false.also { l("חסר signingKey") }
@@ -190,6 +243,7 @@ class PatchEngine(
 
         if (dryRun) {
             l("מצב בדיקה בלבד - לא הוחזר למכשיר")
+            pending[patch.id] = PendingCommit.PushFile(signedZip, target, remount)
             return true
         }
 
@@ -213,7 +267,6 @@ class PatchEngine(
         return ok
     }
 
-    /** סורק את כל ה-classes*.dex בתוך ה-zip ומחזיר את הראשון שמכיל אחת מהמחלקות הנתונות. */
     /**
      * מוודא שהקובץ שנשלף הוא בדיוק הקובץ שהתיקון הזה אומת מולו, *לפני* שנוגעים
      * בו - לפי בקשה מפורשת: לבדוק זהות אחד-לאחד לקובץ מוכר ורק אז להחליף.
@@ -247,6 +300,7 @@ class PatchEngine(
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
+    /** סורק את כל ה-classes*.dex בתוך ה-zip ומחזיר את הראשון שמכיל אחת מהמחלקות הנתונות. */
     private fun findDexContaining(zipFile: File, classNames: List<String>): Pair<String, File>? {
         ZipFile(zipFile).use { zf ->
             val dexEntryNames = zf.entries().asSequence()

@@ -13,6 +13,7 @@
 adb shell su -c "cp /system/system_ext/priv-app/MtkSettings/MtkSettings.apk /sdcard/"
 adb pull /sdcard/MtkSettings.apk
 ```
+(נתיב בודד, בלי "system/system" כפול - המכשיר הזה מסוג system-as-root.)
 
 ## 2. פירוק
 ```
@@ -23,7 +24,12 @@ java -jar apktool.jar d -f -o settings_decoded MtkSettings.apk
 ```
 python patch_wifi_rows.py settings_decoded
 ```
-אמור להדפיס "הוסר 1 אלמנט" שלוש פעמים (אחת לכל קובץ).
+עדכון: הסקריפט מכיל עכשיו רשימה מורחבת - לא רק 3 השורות הראשיות, אלא כל
+הכניסות (entry points) למסכי WiFi שנמצאו בסקירה מלאה של כל res/xml/*.xml
+ב-MtkSettings.apk (Cast/WiFi Display, Hotspot, WiFi Calling, מיקום, הרשאות
+מיוחדות, מידע על המכשיר). אמור להדפיס "הוסר key=..." פעם אחת לכל ערך שנמצא.
+שורה שמדפיסה "לא נמצא key=... - בדוק ידנית" לא בהכרח בעיה - יכול להיות
+שהגרסה הזו של MtkSettings.apk פשוט לא מכילה את ה-key הספציפי הזה.
 
 ## 4. בנייה מחדש
 ```
@@ -45,11 +51,13 @@ jarsigner -keystore platform.p12 -storetype PKCS12 -storepass android -signedjar
 ## 7. החזרה למכשיר — שורד איפוס, ואפשר לשאוב ולהעביר למכשירים נוספים
 ```
 adb push MtkSettings_patched.apk /sdcard/MtkSettings_patched.apk
-adb shell su -c "mount -o remount,rw /system"
+adb shell su -c "mount -o remount,rw /"
 adb shell su -c "cp /sdcard/MtkSettings_patched.apk /system/system_ext/priv-app/MtkSettings/MtkSettings.apk"
 adb shell su -c "chmod 644 /system/system_ext/priv-app/MtkSettings/MtkSettings.apk"
 adb reboot
 ```
+(remount ל-`/` ולא ל-`/system` - במכשיר system-as-root אין mountpoint נפרד
+בשם `/system`, זה פשוט תיקייה בתוך השורש.)
 
 למכשיר נוסף — רק שלב 7, עם אותו `MtkSettings_patched.apk` (לא צריך לחזור על 1–6).
 

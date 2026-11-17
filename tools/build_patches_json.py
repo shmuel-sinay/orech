@@ -150,6 +150,39 @@ patches = [
         ),
     },
     {
+        "id": "dev_options_lock",
+        "title": "חסימת הפעלת 'אפשרויות מפתחים' בסיסמה (תודה להשם)",
+        "kind": "edit",
+        "device": "M36 Plus",
+        "targetFile": "/system/system_ext/priv-app/MtkSettings/MtkSettings.apk",
+        "remount": "/",
+        "signingKey": "platform",
+        "expectedSha256": "16f19026c15e34aabe98f69e2106cc193c2ffb8fc2260c8f5f72efcbaa7e7b9b",
+        "edits": [
+            {
+                "kind": "method",
+                "className": "Lcom/android/settings/deviceinfo/BuildNumberPreferenceController;",
+                "methodName": "enableDevelopmentSettings",
+                "newMethodSmali": read("devoptions_enableDevelopmentSettings.smali"),
+            },
+            {
+                "kind": "class",
+                "className": "Lcom/orech/patcher/DevOptionsUnlockListener;",
+                "newClassSmali": read("DevOptionsUnlockListener.smali"),
+            },
+        ],
+        "note": (
+            "אחרי 7 הקשות על מספר ה-build (About phone), enableDevelopmentSettings() "
+            "הוא המתודה היחידה שבאמת מפעילה את Developer options - עודכן כך שבמקום "
+            "להפעיל ישר, היא מציגה דיאלוג סיסמה (אותה סיסמה 'תודה להשם' כמו בחסימת "
+            "ההתקנות), ורק בסיסמה נכונה קוראת בעצמה ל-DevelopmentSettingsEnabler "
+            "(בדיוק כמו הקוד המקורי). חולץ מ-MtkSettings.apk האמיתי (קריאה בלבד), "
+            "ואומת ב-round-trip מלא. מפתח החתימה platform אומת ישירות על הקובץ הזה "
+            "(לא הונח - נבדק, כולל ש-sharedUserId=android.uid.system, אז הוא קריטי "
+            "לא לפספס). לא נבדק עדיין בפועל על המכשיר."
+        ),
+    },
+    {
         "id": "settings_wifi_rows_removal",
         "title": "הסרת שורת ה-WiFi מתפריט ההגדרות (לא אוטומטי באפליקציה)",
         "kind": "info",

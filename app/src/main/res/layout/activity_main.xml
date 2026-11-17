@@ -30,6 +30,12 @@
         android:layout_height="wrap_content"
         android:text="שלח את הלוג המלא" />
 
+    <Button
+        android:id="@+id/restoreButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="שחזור מגיבוי" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="150dp">

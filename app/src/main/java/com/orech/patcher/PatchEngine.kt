@@ -189,6 +189,19 @@ class PatchEngine(
         return pushed
     }
 
+    /** משחזר קובץ גיבוי בחזרה לנתיב המקורי שלו - החזרה חזרה בודדת, בלי לגעת בשום dex. */
+    fun restore(backupFile: File, targetFile: String, remount: String, log: (String) -> Unit): Boolean {
+        fun l(msg: String) {
+            log(msg)
+            logger.log("[restore] $msg")
+        }
+        l("משחזר את ${backupFile.name} בחזרה אל $targetFile ...")
+        val (ok, out) = RootShell.push(backupFile.absolutePath, targetFile, remount)
+        logger.log(out)
+        l(if (ok) "השחזור הושלם" else "השחזור נכשל - ראה את הלוג המלא")
+        return ok
+    }
+
     /** סורק את כל ה-classes*.dex בתוך ה-zip ומחזיר את הראשון שמכיל אחת מהמחלקות הנתונות. */
     private fun findDexContaining(zipFile: File, classNames: List<String>): Pair<String, File>? {
         ZipFile(zipFile).use { zf ->

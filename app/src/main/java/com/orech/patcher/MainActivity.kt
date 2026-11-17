@@ -1,5 +1,6 @@
 package com.orech.patcher
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
@@ -9,6 +10,9 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
@@ -69,5 +73,56 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent.createChooser(logger.shareIntent(), "שליחת לוג"))
             }
         }
+
+        val restoreButton = findViewById<Button>(R.id.restoreButton)
+        restoreButton.setOnClickListener { showRestoreDialog(logView) }
+    }
+
+    private fun showRestoreDialog(logView: TextView) {
+        val backupsDir = getExternalFilesDir("backups")
+        val files = backupsDir?.listFiles()?.sortedByDescending { it.lastModified() } ?: emptyList()
+        if (files.isEmpty()) {
+            logView.append("אין עדיין קבצי גיבוי.\n")
+            return
+        }
+
+        val stamp = SimpleDateFormat("dd/MM HH:mm:ss", Locale.US)
+        val labels = files.map { f ->
+            val patchId = f.name.substringBeforeLast("_")
+            val patch = patches.find { it.id == patchId }
+            val title = patch?.title ?: patchId
+            "$title - ${stamp.format(Date(f.lastModified()))}"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("בחר גיבוי לשחזור")
+            .setItems(labels) { _, index ->
+                val f = files[index]
+                val patchId = f.name.substringBeforeLast("_")
+                val patch = patches.find { it.id == patchId }
+                val targetFile: String? = patch?.targetFile
+                val remount: String? = patch?.remount
+                if (targetFile == null || remount == null) {
+                    logView.append("לא נמצא נתיב מקור לגיבוי הזה - שחזור ידני דרוש.\n")
+                    return@setItems
+                }
+                AlertDialog.Builder(this)
+                    .setTitle("לשחזר?")
+                    .setMessage("זה יכתוב את ${f.name} בחזרה אל $targetFile. להמשיך?")
+                    .setPositiveButton("שחזר") { _, _ ->
+                        val logger = lastLogger ?: Logger(this).also { lastLogger = it }
+                        logView.append("משחזר...\n")
+                        thread {
+                            val workDir = File(cacheDir, "patchwork").also { it.mkdirs() }
+                            val engine = PatchEngine(this, workDir, logger, dryRun = false)
+                            engine.restore(f, targetFile, remount) { line ->
+                                runOnUiThread { logView.append(line + "\n") }
+                            }
+                        }
+                    }
+                    .setNegativeButton("ביטול", null)
+                    .show()
+            }
+            .show()
     }
 }

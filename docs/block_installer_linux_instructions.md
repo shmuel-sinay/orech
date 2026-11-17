@@ -11,7 +11,7 @@ sudo apt-get install -y default-jre   # או כל JRE/JDK אחר, גרסה 11+
 ## 1. משיכת ה-APK מהמכשיר
 אם ה-adb מחובר ישירות לשרת:
 ```
-adb pull /system/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+adb pull /system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
 ```
 אם לא — להעביר את הקובץ מהמחשב של המשתמש לשרת בכל דרך (scp/USB/כונן משותף).
 

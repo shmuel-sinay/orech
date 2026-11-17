@@ -25,7 +25,7 @@ patches = [
         "title": "ביטול מגבלת 3 אפליקציות אחרונות",
         "kind": "edit",
         "device": "M36 Plus",
-        "targetFile": "/system/system/framework/services.jar",
+        "targetFile": "/system/framework/services.jar",
         "remount": "/system",
         "signingKey": "platform",
         "edits": [
@@ -52,7 +52,7 @@ patches = [
         "title": "הסרת WhatsApp המובנה",
         "kind": "delete",
         "device": "M36 Plus",
-        "targetFile": "/system/system/preinstall/whatsapp.apk",
+        "targetFile": "/system/preinstall/whatsapp.apk",
         "remount": "/system",
     },
     {
@@ -70,7 +70,7 @@ patches = [
         "title": "חסימת התקנת אפליקציות בסיסמה (תודה להשם)",
         "kind": "edit",
         "device": "M36 Plus",
-        "targetFile": "/system/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk",
+        "targetFile": "/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk",
         "remount": "/system",
         "signingKey": "platform",
         "edits": [
@@ -120,7 +120,7 @@ patches = [
         "title": "הסרת דלת אחורית בנעילת המסך (תבנית Z הפוכה)",
         "kind": "edit",
         "device": "M36 Plus",
-        "targetFile": "/system/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk",
+        "targetFile": "/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk",
         "remount": "/system",
         "signingKey": "testkey",
         "edits": [

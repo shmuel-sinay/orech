@@ -250,6 +250,9 @@ class PatchEngine(
         }
 
         if (patch.resourceRemovals.isNotEmpty()) {
+            // לשחרר כל מה שעיבוד ה-dex (baksmali/smali) עוד מחזיק לפני שטוענים
+            // את כל טבלת המשאבים לזיכרון - ARSCLib טוען הכל בבת אחת.
+            System.gc()
             if (!applyResourceRemovals(patch, patchedZip, l)) return false
         }
 

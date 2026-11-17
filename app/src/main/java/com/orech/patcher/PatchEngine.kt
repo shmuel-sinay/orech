@@ -26,6 +26,13 @@ private sealed class PendingCommit {
  * מופע אחד חי לכל חיי ה-Activity (לא נוצר מחדש בכל לחיצה), כדי ש-commit()
  * יוכל להסתמך על מה שכבר הוכן ונבדק ב"בדיקה בלבד" הקודמת.
  */
+/**
+ * לפי בקשה מפורשת של המשתמש (ולפי ניסיון אישי שלו על המכשיר הזה): לא לחתום
+ * בכלל על קבצים אחרי עריכה, גם לא APK-ים. קוד החתימה (Signer.kt) לא נמחק -
+ * אם מתברר שצריך אותו בעתיד, להחזיר ל-true זה כל מה שצריך.
+ */
+private const val SIGN_EDITED_FILES = false
+
 class PatchEngine(
     private val context: Context,
     private val workDir: File,
@@ -154,7 +161,8 @@ class PatchEngine(
     private fun applyEdit(patch: Patch, dryRun: Boolean, l: (String) -> Unit): Boolean {
         val target = patch.targetFile ?: return false.also { l("חסר targetFile") }
         val remount = patch.remount ?: return false.also { l("חסר remount") }
-        val signingKey = patch.signingKey ?: return false.also { l("חסר signingKey") }
+        val signingKey = patch.signingKey
+        if (SIGN_EDITED_FILES && signingKey == null) return false.also { l("חסר signingKey") }
         if (patch.edits.isEmpty()) return false.also { l("אין edits בתיקון הזה") }
 
         l("שולף את $target")
@@ -227,19 +235,25 @@ class PatchEngine(
         val patchedZip = File(workDir, "${patch.id}_patched.apk")
         replaceEntryInZip(localOriginal, patchedZip, dexEntryName, newDexFile)
 
-        val signedZip = File(workDir, "${patch.id}_signed.apk")
-        l("חותם עם ${patch.signingKey}...")
-        Signer.sign(context, patchedZip, signedZip, signingKey)
-        l("קובץ חתום מוכן: ${signedZip.absolutePath} (${signedZip.length()} בייט)")
+        val signedZip: File
+        if (SIGN_EDITED_FILES && signingKey != null) {
+            signedZip = File(workDir, "${patch.id}_signed.apk")
+            l("חותם עם ${patch.signingKey}...")
+            Signer.sign(context, patchedZip, signedZip, signingKey)
+            l("קובץ חתום מוכן: ${signedZip.absolutePath} (${signedZip.length()} בייט)")
 
-        l("מאמת את החתימה לפני שממשיכים...")
-        val (verified, verifyLog) = Signer.verify(signedZip)
-        logger.log(verifyLog)
-        if (!verified) {
-            l("אימות החתימה נכשל - לא ממשיכים להחזיר למכשיר, ראה את הלוג המלא")
-            return false
+            l("מאמת את החתימה לפני שממשיכים...")
+            val (verified, verifyLog) = Signer.verify(signedZip)
+            logger.log(verifyLog)
+            if (!verified) {
+                l("אימות החתימה נכשל - לא ממשיכים להחזיר למכשיר, ראה את הלוג המלא")
+                return false
+            }
+            l("החתימה אומתה בהצלחה")
+        } else {
+            signedZip = patchedZip
+            l("ללא חתימה (לפי בחירה מפורשת) - הקובץ יוחזר כמו שהוא, רק ה-dex הוחלף")
         }
-        l("החתימה אומתה בהצלחה")
 
         if (dryRun) {
             l("מצב בדיקה בלבד - לא הוחזר למכשיר")

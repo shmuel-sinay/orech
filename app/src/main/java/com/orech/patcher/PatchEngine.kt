@@ -176,11 +176,17 @@ class PatchEngine(
 
         val signedZip = File(workDir, "${patch.id}_signed.apk")
         l("חותם עם ${patch.signingKey}...")
-        if (!Signer.sign(context, patchedZip, signedZip, signingKey)) {
-            l("חתימה נכשלה")
+        Signer.sign(context, patchedZip, signedZip, signingKey)
+        l("קובץ חתום מוכן: ${signedZip.absolutePath} (${signedZip.length()} בייט)")
+
+        l("מאמת את החתימה לפני שממשיכים...")
+        val (verified, verifyLog) = Signer.verify(signedZip)
+        logger.log(verifyLog)
+        if (!verified) {
+            l("אימות החתימה נכשל - לא ממשיכים להחזיר למכשיר, ראה את הלוג המלא")
             return false
         }
-        l("קובץ חתום מוכן: ${signedZip.absolutePath} (${signedZip.length()} בייט)")
+        l("החתימה אומתה בהצלחה")
 
         if (dryRun) {
             l("מצב בדיקה בלבד - לא הוחזר למכשיר")

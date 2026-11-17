@@ -39,12 +39,19 @@ object RootShell {
         return results
     }
 
-    /** מחזיר (הצלחה, לוג מפורט) - ההצלחה נקבעת לפי קיום הקובץ וגודלו, לא לפי קוד היציאה של su. */
+    /**
+     * מחזיר (הצלחה, לוג מפורט). בכוונה בלי "2>&1" על ה-cat: אם cat נכשל לקרוא
+     * את המקור, שגיאת ה-stderr שלו צריכה להגיע ללוג שלנו - לא להיכתב בטעות
+     * *בתוך* קובץ היעד (מה שהיה יוצר קובץ קטן "תקין למראה" שבפועל הוא טקסט
+     * שגיאה, לא התוכן האמיתי). ההצלחה נקבעת גם לפי קוד היציאה וגם לפי שהקובץ
+     * נוצר ולא ריק.
+     */
     fun pull(remotePath: String, localPath: String): Pair<Boolean, String> {
-        val results = exec("cat '$remotePath' > '$localPath' 2>&1", "chmod 666 '$localPath'")
-        val ok = File(localPath).let { it.exists() && it.length() > 0 }
+        val results = exec("cat '$remotePath' > '$localPath'", "chmod 666 '$localPath'")
+        val catOk = results.first().second == 0
+        val fileOk = File(localPath).let { it.exists() && it.length() > 0 }
         val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" }
-        return ok to log
+        return (catOk && fileOk) to log
     }
 
     fun push(localPath: String, remotePath: String, remount: String): Pair<Boolean, String> {

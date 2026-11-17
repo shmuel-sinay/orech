@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
             logger.log("=== הפעלה: dryRun=$dryRun, patches=$selected ===")
 
             thread {
-                val workDir = File(cacheDir, "patchwork").also { it.mkdirs() }
+                val workDir = File(getExternalFilesDir(null), "patchwork").also { it.mkdirs() }
                 val engine = PatchEngine(this, workDir, logger, dryRun)
                 for (patch in patches.filter { it.id in selected }) {
                     engine.apply(patch) { line ->
@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                         val logger = lastLogger ?: Logger(this).also { lastLogger = it }
                         logView.append("משחזר...\n")
                         thread {
-                            val workDir = File(cacheDir, "patchwork").also { it.mkdirs() }
+                            val workDir = File(getExternalFilesDir(null), "patchwork").also { it.mkdirs() }
                             val engine = PatchEngine(this, workDir, logger, dryRun = false)
                             engine.restore(f, targetFile, remount) { line ->
                                 runOnUiThread { logView.append(line + "\n") }

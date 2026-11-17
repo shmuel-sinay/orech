@@ -40,6 +40,10 @@ data class Patch(
     val targetFile: String? = null,
     val remount: String? = null,
     val signingKey: String? = null,
+    /** SHA-256 (lowercase hex) של הקובץ המקורי שהתיקון הזה אומת מולו. אם מוגדר,
+     * המנוע בודק את הקובץ שהוא שלף/מצא *לפני* שהוא נוגע בו, ומסרב להמשיך אם
+     * זה לא תואם בדיוק - כדי לא להחיל תיקון על קושחה/קובץ שלא אומת מולו. */
+    val expectedSha256: String? = null,
     val edits: List<Edit> = emptyList(),
     val settingNamespace: String? = null,
     val settingKey: String? = null,
@@ -67,6 +71,7 @@ data class Patch(
                         targetFile = o.optString("targetFile").ifEmpty { null },
                         remount = o.optString("remount").ifEmpty { null },
                         signingKey = o.optString("signingKey").ifEmpty { null },
+                        expectedSha256 = o.optString("expectedSha256").ifEmpty { null },
                         edits = edits,
                         settingNamespace = o.optString("settingNamespace").ifEmpty { null },
                         settingKey = o.optString("settingKey").ifEmpty { null },

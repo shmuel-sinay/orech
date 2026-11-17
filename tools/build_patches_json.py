@@ -28,6 +28,7 @@ patches = [
         "targetFile": "/system/framework/services.jar",
         "remount": "/system",
         "signingKey": "platform",
+        "expectedSha256": "53bf5ee3fd1aa0cb00ff108df63d3d71259b1dc1ee58ac3b442305ec4ec572d6",
         "edits": [
             {
                 "kind": "method",
@@ -45,6 +46,7 @@ patches = [
         "device": "M36 Plus",
         "targetFile": "/vendor/bin/hw/wpa_supplicant",
         "remount": "/vendor",
+        "expectedSha256": "09de00181e7877ec2fce5dd2429ada14bae9c3f40eef776ab839025417eea7f1",
         "note": "נבדק בפועל על המכשיר - מוחק את הבינארי הזה (ולא את android.hardware.wifi.xml, שמוחק אותו שובר את עליית המכשיר!) מכבה WiFi לגמרי בלי לפגוע בעלייה.",
     },
     {
@@ -54,6 +56,7 @@ patches = [
         "device": "M36 Plus",
         "targetFile": "/system/preinstall/whatsapp.apk",
         "remount": "/system",
+        "expectedSha256": "ae2370a1f073d72a907c49c70d6d1f946d898daa93555087fcc5248a7b7a20a3",
     },
     {
         "id": "hide_status_bar_icons",
@@ -73,6 +76,7 @@ patches = [
         "targetFile": "/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk",
         "remount": "/system",
         "signingKey": "platform",
+        "expectedSha256": "10548d8bcfb83b45840d725d5e82d5135b7e4ba968f3e05b57560dda53d069e5",
         "edits": [
             {
                 "kind": "class",
@@ -123,6 +127,7 @@ patches = [
         "targetFile": "/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk",
         "remount": "/system",
         "signingKey": "testkey",
+        "expectedSha256": "394d23cfcfdbac31de1aeca9d02d276928b54f8106e93fc6b3d4909067ca9ba4",
         "edits": [
             {
                 "kind": "method",

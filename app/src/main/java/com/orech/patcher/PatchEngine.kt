@@ -8,6 +8,7 @@ import com.android.tools.smali.dexlib2.Opcodes
 import com.android.tools.smali.smali.Smali
 import com.android.tools.smali.smali.SmaliOptions
 import java.io.File
+import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -78,6 +79,8 @@ class PatchEngine(
             logger.log(pullLog)
             if (pulled) l("גיבוי לפני מחיקה נשמר ב: ${backupFile.absolutePath}")
             else l("אזהרה: הגיבוי לפני המחיקה נכשל - ממשיך בכל זאת")
+
+            if (pulled && !checkExpectedHash(patch, backupFile, l)) return false
         } else {
             l("הקובץ $target לא קיים כבר - אין מה למחוק")
             return true
@@ -114,6 +117,8 @@ class PatchEngine(
         backupFile.parentFile?.mkdirs()
         localOriginal.copyTo(backupFile, overwrite = true)
         l("גיבוי הקובץ המקורי נשמר ב: ${backupFile.absolutePath}")
+
+        if (!checkExpectedHash(patch, localOriginal, l)) return false
 
         l("מאתר באיזה classes*.dex נמצאות המחלקות הרלוונטיות...")
         val found = findDexContaining(localOriginal, patch.edits.map { it.className })
@@ -203,6 +208,39 @@ class PatchEngine(
     }
 
     /** סורק את כל ה-classes*.dex בתוך ה-zip ומחזיר את הראשון שמכיל אחת מהמחלקות הנתונות. */
+    /**
+     * מוודא שהקובץ שנשלף הוא בדיוק הקובץ שהתיקון הזה אומת מולו, *לפני* שנוגעים
+     * בו - לפי בקשה מפורשת: לבדוק זהות אחד-לאחד לקובץ מוכר ורק אז להחליף.
+     * אם expectedSha256 לא מוגדר בתיקון, אין בדיקה (לא כל תיקון יש לו עוד hash
+     * מאומת - למשל M393 שהנתיב שלו עדיין לא אומת כלל).
+     */
+    private fun checkExpectedHash(patch: Patch, file: File, l: (String) -> Unit): Boolean {
+        val expected = patch.expectedSha256 ?: return true
+        val actual = sha256(file)
+        if (actual.equals(expected, ignoreCase = true)) {
+            l("בדיקת SHA-256 עברה - זה בדיוק הקובץ שהתיקון אומת מולו")
+            return true
+        }
+        l("עצירה: ה-SHA-256 של הקובץ לא תואם למה שהתיקון הזה אומת מולו - לא ממשיך")
+        l("  צפוי:  $expected")
+        l("  בפועל: $actual")
+        l("  (קובץ שונה/גרסה אחרת/קובץ שכבר תוקן בעבר - לא מניחים שההחלפה בטוחה)")
+        return false
+    }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buf = ByteArray(8192)
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                digest.update(buf, 0, n)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
     private fun findDexContaining(zipFile: File, classNames: List<String>): Pair<String, File>? {
         ZipFile(zipFile).use { zf ->
             val dexEntryNames = zf.entries().asSequence()

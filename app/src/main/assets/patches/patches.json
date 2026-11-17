@@ -118,8 +118,8 @@
     "note": "המתודה האמיתית חולצה בעצמי מתוך MtkSystemUI.apk האמיתי (קריאה בלבד - androguard, בלי לבנות/לחתום/להעביר כלום בעצמי - ראו tools/extract_method.py), אומתה שהבלוק של '9875321'/persist.sys.secret הוא אכן הדלת האחורית (לפי מתמטיקת ה-offsets האמיתית של הקפיצות), והוחלפה ב-smali שנבדק בהרכבה+פירוק מלאה (round-trip, ראו tools/verify_smali.sh) על dex נפרד - נכשל בפועל במכשיר (SystemUI בלופ קריסות) כש-signingKey היה testkey. אומת ישירות (השוואת SHA-256 של המפתח האמיתי בתוך MtkSystemUI.apk) ש-platform הוא המפתח הנכון - וש-MtkSystemUI.apk מגדיר sharedUserId=android.uid.systemui, כך שחתימה לא תואמת גורמת לאובדן הרשאות ברמת signature ולקריסה. signingKey תוקן ל-platform."
   },
   {
-    "id": "dev_options_lock",
-    "title": "חסימת הפעלת 'אפשרויות מפתחים' בסיסמה (תודה להשם)",
+    "id": "mtksettings_fixes",
+    "title": "הגדרות: חסימת 'אפשרויות מפתחים' בסיסמה + הסרת כל כניסות ה-WiFi",
     "kind": "edit",
     "device": "M36 Plus",
     "targetFile": "/system/system_ext/priv-app/MtkSettings/MtkSettings.apk",
@@ -139,13 +139,76 @@
         "newClassSmali": ".class public Lcom/orech/patcher/DevOptionsUnlockListener;\n.super Ljava/lang/Object;\n.implements Landroid/content/DialogInterface$OnClickListener;\n\n.field private final mContext:Landroid/content/Context;\n.field private final mEditText:Landroid/widget/EditText;\n\n.method public constructor <init>(Landroid/content/Context;Landroid/widget/EditText;)V\n    .registers 3\n\n    invoke-direct {p0}, Ljava/lang/Object;-><init>()V\n\n    iput-object p1, p0, Lcom/orech/patcher/DevOptionsUnlockListener;->mContext:Landroid/content/Context;\n\n    iput-object p2, p0, Lcom/orech/patcher/DevOptionsUnlockListener;->mEditText:Landroid/widget/EditText;\n\n    return-void\n.end method\n\n.method public onClick(Landroid/content/DialogInterface;I)V\n    .registers 7\n\n    iget-object v0, p0, Lcom/orech/patcher/DevOptionsUnlockListener;->mEditText:Landroid/widget/EditText;\n\n    invoke-virtual {v0}, Landroid/widget/EditText;->getText()Landroid/text/Editable;\n\n    move-result-object v0\n\n    invoke-virtual {v0}, Ljava/lang/Object;->toString()Ljava/lang/String;\n\n    move-result-object v0\n\n    const-string v1, \"תודה להשם\"\n\n    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z\n\n    move-result v0\n\n    iget-object v1, p0, Lcom/orech/patcher/DevOptionsUnlockListener;->mContext:Landroid/content/Context;\n\n    if-eqz v0, :wrong\n\n    const/4 v2, 0x1\n\n    invoke-static {v1, v2}, Lcom/android/settingslib/development/DevelopmentSettingsEnabler;->setDevelopmentSettingsEnabled(Landroid/content/Context;Z)V\n\n    sget v2, Lcom/android/settings/R$string;->show_dev_on:I\n\n    const/4 v3, 0x1\n\n    invoke-static {v1, v2, v3}, Landroid/widget/Toast;->makeText(Landroid/content/Context;II)Landroid/widget/Toast;\n\n    move-result-object v2\n\n    invoke-virtual {v2}, Landroid/widget/Toast;->show()V\n\n    return-void\n\n    :wrong\n    const-string v2, \"סיסמא שגויה\"\n\n    const/4 v3, 0x0\n\n    invoke-static {v1, v2, v3}, Landroid/widget/Toast;->makeText(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;\n\n    move-result-object v2\n\n    invoke-virtual {v2}, Landroid/widget/Toast;->show()V\n\n    return-void\n.end method"
       }
     ],
-    "note": "אחרי 7 הקשות על מספר ה-build (About phone), enableDevelopmentSettings() הוא המתודה היחידה שבאמת מפעילה את Developer options - עודכן כך שבמקום להפעיל ישר, היא מציגה דיאלוג סיסמה (אותה סיסמה 'תודה להשם' כמו בחסימת ההתקנות), ורק בסיסמה נכונה קוראת בעצמה ל-DevelopmentSettingsEnabler (בדיוק כמו הקוד המקורי). חולץ מ-MtkSettings.apk האמיתי (קריאה בלבד), ואומת ב-round-trip מלא. מפתח החתימה platform אומת ישירות על הקובץ הזה (לא הונח - נבדק, כולל ש-sharedUserId=android.uid.system, אז הוא קריטי לא לפספס). לא נבדק עדיין בפועל על המכשיר."
-  },
-  {
-    "id": "settings_wifi_rows_removal",
-    "title": "הסרת שורת ה-WiFi מתפריט ההגדרות (לא אוטומטי באפליקציה)",
-    "kind": "info",
-    "device": "M36 Plus",
-    "infoText": "זו עריכת משאבים בינארית (resources.arsc / AXML) בתוך MtkSettings.apk - לא dex, ולכן המנוע הנוכחי של האפליקציה (שעובד רק על smali/dex) לא יכול לבצע אותה. התהליך שעבד בעבר רץ על המחשב עם apktool - ראו docs/wifi_row_removal_README.md ו-tools/patch_wifi_rows.py. אפשר להוסיף תמיכה כזו לאפליקציה בעזרת ספריית עיבוד AXML/ARSC (כמו ARSCLib) - זה פרויקט בפני עצמו, לא נעשה עדיין."
+    "resourceRemovals": [
+      {
+        "path": "res/xml/top_level_settings.xml",
+        "key": "main_toggle_wifi"
+      },
+      {
+        "path": "res/xml/network_and_internet.xml",
+        "key": "main_toggle_wifi"
+      },
+      {
+        "path": "res/xml/network_provider_settings.xml",
+        "key": "main_toggle_wifi"
+      },
+      {
+        "path": "res/xml/network_provider_settings.xml",
+        "key": "wifi_status_message_footer"
+      },
+      {
+        "path": "res/xml/connected_devices_advanced.xml",
+        "key": "wifi_display_settings"
+      },
+      {
+        "path": "res/xml/tether_prefs.xml",
+        "key": "wifi_tether"
+      },
+      {
+        "path": "res/xml/mobile_network_settings.xml",
+        "key": "carrier_wifi_toggle"
+      },
+      {
+        "path": "res/xml/mobile_network_settings.xml",
+        "key": "carrier_wifi_network"
+      },
+      {
+        "path": "res/xml/mobile_network_settings.xml",
+        "key": "wifi_calling"
+      },
+      {
+        "path": "res/xml/advanced_calling_settings.xml",
+        "key": "wifi_calling_key"
+      },
+      {
+        "path": "res/xml/location_services.xml",
+        "key": "location_services_wifi_scanning"
+      },
+      {
+        "path": "res/xml/special_access.xml",
+        "key": "change_wifi_state"
+      },
+      {
+        "path": "res/xml/my_device_info.xml",
+        "key": "wifi_ip_address"
+      },
+      {
+        "path": "res/xml/my_device_info.xml",
+        "key": "saved_accesspoints_wifi_mac_address"
+      },
+      {
+        "path": "res/xml/my_device_info.xml",
+        "key": "wifi_mac_address"
+      },
+      {
+        "path": "res/xml/device_info_status.xml",
+        "key": "wifi_ip_address"
+      },
+      {
+        "path": "res/xml/device_info_status.xml",
+        "key": "wifi_mac_address"
+      }
+    ],
+    "note": "שני דברים על אותו קובץ באותה עריכה אחת (כדי שלא יתחרו על ה-hash של המקור): (1) אחרי 7 הקשות על מספר ה-build, enableDevelopmentSettings() הוא המתודה היחידה שבאמת מפעילה Developer options - עודכן כך שבמקום להפעיל ישר, היא מציגה דיאלוג סיסמה ('תודה להשם', אותה סיסמה כמו בחסימת ההתקנות), ורק בסיסמה נכונה קוראת בעצמה ל-DevelopmentSettingsEnabler. (2) הוסרו כל נקודות הכניסה האמיתיות ל-WiFi שנמצאו בסקירה מלאה של כל res/xml/*.xml ב-MtkSettings.apk האמיתי (Cast, Hotspot, WiFi Calling, מיקום, הרשאות מיוחדות, מידע מכשיר) - בלי apktool/PC, עם ARSCLib ישירות על resources.arsc/AXML. Developer Options עצמן לא נגעו בהן בכוונה. מסכי WiFi 'עלים' (wifi_settings.xml וכו') לא נגעו בהם - בלתי נגישים ברגע שהכניסה מוסרת, וממש כך WiFi כבוי ברמת החומרה בכל מקרה. מפתח החתימה platform אומת ישירות על הקובץ הזה (כולל sharedUserId=android.uid.system). שני החלקים אומתו בנפרד (round-trip לחלק ה-dex, הרצה אמיתית מול MtkSettings.apk האמיתי לחלק המשאבים) - אבל עדיין לא נבדקו משולבים ובפועל על המכשיר."
   }
 ]

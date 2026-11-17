@@ -33,6 +33,9 @@ dependencies {
     // חתימת APK/JAR מחדש - אותה ספרייה ש-AGP עצמו משתמש בה.
     implementation("com.android.tools.build:apksig:8.5.0")
 
+    // עריכת משאבים בינאריים (resources.arsc / AXML) בתוך APK - בלי apktool/PC.
+    implementation("io.github.reandroid:ARSCLib:1.3.5")
+
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")

@@ -7,6 +7,9 @@ import com.android.tools.smali.dexlib2.DexFileFactory
 import com.android.tools.smali.dexlib2.Opcodes
 import com.android.tools.smali.smali.Smali
 import com.android.tools.smali.smali.SmaliOptions
+import com.reandroid.apk.ApkModule
+import com.reandroid.arsc.chunk.xml.ResXmlAttribute
+import com.reandroid.arsc.chunk.xml.ResXmlElement
 import java.io.File
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
@@ -163,7 +166,9 @@ class PatchEngine(
         val remount = patch.remount ?: return false.also { l("חסר remount") }
         val signingKey = patch.signingKey
         if (SIGN_EDITED_FILES && signingKey == null) return false.also { l("חסר signingKey") }
-        if (patch.edits.isEmpty()) return false.also { l("אין edits בתיקון הזה") }
+        if (patch.edits.isEmpty() && patch.resourceRemovals.isEmpty()) {
+            return false.also { l("אין edits ואין resourceRemovals בתיקון הזה") }
+        }
 
         l("שולף את $target")
         val localOriginal = File(workDir, "${patch.id}_original")
@@ -181,59 +186,72 @@ class PatchEngine(
 
         if (!checkExpectedHash(patch, localOriginal, l)) return false
 
-        l("מאתר באיזה classes*.dex נמצאות המחלקות הרלוונטיות...")
-        val found = findDexContaining(localOriginal, patch.edits.map { it.className })
-        if (found == null) {
-            l("לא נמצא classes*.dex שמכיל אף אחת מהמחלקות של התיקון הזה - כנראה גרסה לא תואמת")
-            return false
-        }
-        val (dexEntryName, dexLocalFile) = found
-        l("נמצא ב: $dexEntryName")
+        // patchedZip מתחיל כעותק של המקור, ושתי שכבות העריכה (dex ואז משאבים)
+        // עובדות ברצף על אותו קובץ - כך שאפשר לשלב את שתיהן בפאץ' אחד על אותו
+        // קובץ, בלי ששתיהן "יתחרו" זו בזו על hash המקור.
+        var patchedZip = File(workDir, "${patch.id}_patched.apk")
+        localOriginal.copyTo(patchedZip, overwrite = true)
 
-        val smaliOutDir = File(workDir, "${patch.id}_smali").also { it.deleteRecursively(); it.mkdirs() }
-        l("מפרק ל-smali...")
-        val dex = DexFileFactory.loadDexFile(dexLocalFile, Opcodes.getDefault())
-        Baksmali.disassembleDexFile(dex, smaliOutDir, 1, BaksmaliOptions())
+        if (patch.edits.isNotEmpty()) {
+            l("מאתר באיזה classes*.dex נמצאות המחלקות הרלוונטיות...")
+            val found = findDexContaining(patchedZip, patch.edits.map { it.className })
+            if (found == null) {
+                l("לא נמצא classes*.dex שמכיל אף אחת מהמחלקות של התיקון הזה - כנראה גרסה לא תואמת")
+                return false
+            }
+            val (dexEntryName, dexLocalFile) = found
+            l("נמצא ב: $dexEntryName")
 
-        for (edit in patch.edits) {
-            val classRelPath = edit.className.removePrefix("L").removeSuffix(";") + ".smali"
-            val smaliFile = File(smaliOutDir, classRelPath)
-            when (edit.kind) {
-                "method" -> {
-                    if (!smaliFile.exists()) {
-                        l("לא נמצא קובץ smali למחלקה ${edit.className} - דולג")
+            val smaliOutDir = File(workDir, "${patch.id}_smali").also { it.deleteRecursively(); it.mkdirs() }
+            l("מפרק ל-smali...")
+            val dex = DexFileFactory.loadDexFile(dexLocalFile, Opcodes.getDefault())
+            Baksmali.disassembleDexFile(dex, smaliOutDir, 1, BaksmaliOptions())
+
+            for (edit in patch.edits) {
+                val classRelPath = edit.className.removePrefix("L").removeSuffix(";") + ".smali"
+                val smaliFile = File(smaliOutDir, classRelPath)
+                when (edit.kind) {
+                    "method" -> {
+                        if (!smaliFile.exists()) {
+                            l("לא נמצא קובץ smali למחלקה ${edit.className} - דולג")
+                            return false
+                        }
+                        l("מחליף את ${edit.methodName} ב-${edit.className}...")
+                        if (!replaceMethod(smaliFile, edit.methodName ?: "", edit.newMethodSmali ?: "")) {
+                            l("לא נמצאה המתודה ${edit.methodName} - לא בוצע שינוי")
+                            return false
+                        }
+                    }
+                    "class" -> {
+                        l("כותב קובץ smali שלם ל-${edit.className} (${if (smaliFile.exists()) "מחליף קיים" else "מחלקה חדשה"})...")
+                        smaliFile.parentFile?.mkdirs()
+                        smaliFile.writeText((edit.newClassSmali ?: "").trim() + "\n")
+                    }
+                    else -> {
+                        l("סוג edit לא מוכר: ${edit.kind}")
                         return false
                     }
-                    l("מחליף את ${edit.methodName} ב-${edit.className}...")
-                    if (!replaceMethod(smaliFile, edit.methodName ?: "", edit.newMethodSmali ?: "")) {
-                        l("לא נמצאה המתודה ${edit.methodName} - לא בוצע שינוי")
-                        return false
-                    }
-                }
-                "class" -> {
-                    l("כותב קובץ smali שלם ל-${edit.className} (${if (smaliFile.exists()) "מחליף קיים" else "מחלקה חדשה"})...")
-                    smaliFile.parentFile?.mkdirs()
-                    smaliFile.writeText((edit.newClassSmali ?: "").trim() + "\n")
-                }
-                else -> {
-                    l("סוג edit לא מוכר: ${edit.kind}")
-                    return false
                 }
             }
+
+            l("מרכיב מחדש ל-dex...")
+            val newDexFile = File(workDir, "${patch.id}_new.dex")
+            val smaliOptions = SmaliOptions()
+            smaliOptions.outputDexFile = newDexFile.absolutePath
+            val assembled = Smali.assemble(smaliOptions, listOf(smaliOutDir.absolutePath))
+            if (!assembled) {
+                l("הרכבה מחדש נכשלה")
+                return false
+            }
+
+            val afterDex = File(workDir, "${patch.id}_after_dex.apk")
+            replaceEntryInZip(patchedZip, afterDex, dexEntryName, newDexFile)
+            patchedZip = afterDex
         }
 
-        l("מרכיב מחדש ל-dex...")
-        val newDexFile = File(workDir, "${patch.id}_new.dex")
-        val smaliOptions = SmaliOptions()
-        smaliOptions.outputDexFile = newDexFile.absolutePath
-        val assembled = Smali.assemble(smaliOptions, listOf(smaliOutDir.absolutePath))
-        if (!assembled) {
-            l("הרכבה מחדש נכשלה")
-            return false
+        if (patch.resourceRemovals.isNotEmpty()) {
+            if (!applyResourceRemovals(patch, patchedZip, l)) return false
         }
-
-        val patchedZip = File(workDir, "${patch.id}_patched.apk")
-        replaceEntryInZip(localOriginal, patchedZip, dexEntryName, newDexFile)
 
         val signedZip: File
         if (SIGN_EDITED_FILES && signingKey != null) {
@@ -266,6 +284,48 @@ class PatchEngine(
         logger.log(pushLog)
         l(if (pushed) "הושלם בהצלחה" else "נכשל בהעברה חזרה - ראה את הלוג המלא")
         return pushed
+    }
+
+    /**
+     * מסיר אלמנטי Preference (או כל אלמנט עם android:key) ממשאבי XML בינאריים
+     * בתוך ה-APK, לפי (path, key) - בלי apktool/PC, עם ARSCLib. דורס את
+     * patchedZip בקובץ חדש; patch.resourceRemovals מגיע מ-patchedZip ולא
+     * מ-localOriginal, כך שאפשר לשלב את זה עם עריכות dex על אותו קובץ.
+     */
+    private fun applyResourceRemovals(patch: Patch, patchedZip: File, l: (String) -> Unit): Boolean {
+        l("עורך משאבים בינאריים (${patch.resourceRemovals.size} הסרות)...")
+        val module = ApkModule.loadApkFile(patchedZip)
+        var totalRemoved = 0
+        for (removal in patch.resourceRemovals) {
+            val doc = module.getResXmlDocument(removal.path)
+            if (doc == null) {
+                l("לא נמצא קובץ משאב: ${removal.path} - דולג")
+                continue
+            }
+            val targets = mutableListOf<ResXmlElement>()
+            val it = doc.recursiveElements()
+            while (it.hasNext()) {
+                val e = it.next()
+                val attr: ResXmlAttribute? = e.searchAttributeByName("key")
+                if (attr != null && removal.key == attr.valueString) targets.add(e)
+            }
+            if (targets.isEmpty()) {
+                l("לא נמצא key=\"${removal.key}\" ב-${removal.path} - דולג")
+                continue
+            }
+            for (t in targets) t.removeSelf()
+            l("הוסר key=\"${removal.key}\" מתוך ${removal.path} (${targets.size})")
+            totalRemoved += targets.size
+        }
+        if (totalRemoved == 0) {
+            l("אף הסרה לא בוצעה בפועל - לא ממשיכים")
+            return false
+        }
+        val afterResources = File(workDir, "${patch.id}_after_res.apk")
+        module.writeApk(afterResources)
+        afterResources.copyTo(patchedZip, overwrite = true)
+        l("עריכת המשאבים הושלמה (${totalRemoved} אלמנטים הוסרו בסה\"כ)")
+        return true
     }
 
     /** משחזר קובץ גיבוי בחזרה לנתיב המקורי שלו - החזרה חזרה בודדת, בלי לגעת בשום dex. */

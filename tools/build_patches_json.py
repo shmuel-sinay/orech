@@ -150,8 +150,8 @@ patches = [
         ),
     },
     {
-        "id": "dev_options_lock",
-        "title": "חסימת הפעלת 'אפשרויות מפתחים' בסיסמה (תודה להשם)",
+        "id": "mtksettings_fixes",
+        "title": "הגדרות: חסימת 'אפשרויות מפתחים' בסיסמה + הסרת כל כניסות ה-WiFi",
         "kind": "edit",
         "device": "M36 Plus",
         "targetFile": "/system/system_ext/priv-app/MtkSettings/MtkSettings.apk",
@@ -171,28 +171,41 @@ patches = [
                 "newClassSmali": read("DevOptionsUnlockListener.smali"),
             },
         ],
+        "resourceRemovals": [
+            {"path": "res/xml/top_level_settings.xml", "key": "main_toggle_wifi"},
+            {"path": "res/xml/network_and_internet.xml", "key": "main_toggle_wifi"},
+            {"path": "res/xml/network_provider_settings.xml", "key": "main_toggle_wifi"},
+            {"path": "res/xml/network_provider_settings.xml", "key": "wifi_status_message_footer"},
+            {"path": "res/xml/connected_devices_advanced.xml", "key": "wifi_display_settings"},
+            {"path": "res/xml/tether_prefs.xml", "key": "wifi_tether"},
+            {"path": "res/xml/mobile_network_settings.xml", "key": "carrier_wifi_toggle"},
+            {"path": "res/xml/mobile_network_settings.xml", "key": "carrier_wifi_network"},
+            {"path": "res/xml/mobile_network_settings.xml", "key": "wifi_calling"},
+            {"path": "res/xml/advanced_calling_settings.xml", "key": "wifi_calling_key"},
+            {"path": "res/xml/location_services.xml", "key": "location_services_wifi_scanning"},
+            {"path": "res/xml/special_access.xml", "key": "change_wifi_state"},
+            {"path": "res/xml/my_device_info.xml", "key": "wifi_ip_address"},
+            {"path": "res/xml/my_device_info.xml", "key": "saved_accesspoints_wifi_mac_address"},
+            {"path": "res/xml/my_device_info.xml", "key": "wifi_mac_address"},
+            {"path": "res/xml/device_info_status.xml", "key": "wifi_ip_address"},
+            {"path": "res/xml/device_info_status.xml", "key": "wifi_mac_address"},
+        ],
         "note": (
-            "אחרי 7 הקשות על מספר ה-build (About phone), enableDevelopmentSettings() "
-            "הוא המתודה היחידה שבאמת מפעילה את Developer options - עודכן כך שבמקום "
-            "להפעיל ישר, היא מציגה דיאלוג סיסמה (אותה סיסמה 'תודה להשם' כמו בחסימת "
-            "ההתקנות), ורק בסיסמה נכונה קוראת בעצמה ל-DevelopmentSettingsEnabler "
-            "(בדיוק כמו הקוד המקורי). חולץ מ-MtkSettings.apk האמיתי (קריאה בלבד), "
-            "ואומת ב-round-trip מלא. מפתח החתימה platform אומת ישירות על הקובץ הזה "
-            "(לא הונח - נבדק, כולל ש-sharedUserId=android.uid.system, אז הוא קריטי "
-            "לא לפספס). לא נבדק עדיין בפועל על המכשיר."
-        ),
-    },
-    {
-        "id": "settings_wifi_rows_removal",
-        "title": "הסרת שורת ה-WiFi מתפריט ההגדרות (לא אוטומטי באפליקציה)",
-        "kind": "info",
-        "device": "M36 Plus",
-        "infoText": (
-            "זו עריכת משאבים בינארית (resources.arsc / AXML) בתוך MtkSettings.apk - "
-            "לא dex, ולכן המנוע הנוכחי של האפליקציה (שעובד רק על smali/dex) לא יכול "
-            "לבצע אותה. התהליך שעבד בעבר רץ על המחשב עם apktool - ראו docs/wifi_row_removal_README.md "
-            "ו-tools/patch_wifi_rows.py. אפשר להוסיף תמיכה כזו לאפליקציה בעזרת ספריית "
-            "עיבוד AXML/ARSC (כמו ARSCLib) - זה פרויקט בפני עצמו, לא נעשה עדיין."
+            "שני דברים על אותו קובץ באותה עריכה אחת (כדי שלא יתחרו על ה-hash של "
+            "המקור): (1) אחרי 7 הקשות על מספר ה-build, enableDevelopmentSettings() "
+            "הוא המתודה היחידה שבאמת מפעילה Developer options - עודכן כך שבמקום "
+            "להפעיל ישר, היא מציגה דיאלוג סיסמה ('תודה להשם', אותה סיסמה כמו "
+            "בחסימת ההתקנות), ורק בסיסמה נכונה קוראת בעצמה ל-DevelopmentSettingsEnabler. "
+            "(2) הוסרו כל נקודות הכניסה האמיתיות ל-WiFi שנמצאו בסקירה מלאה של כל "
+            "res/xml/*.xml ב-MtkSettings.apk האמיתי (Cast, Hotspot, WiFi Calling, "
+            "מיקום, הרשאות מיוחדות, מידע מכשיר) - בלי apktool/PC, עם ARSCLib ישירות "
+            "על resources.arsc/AXML. Developer Options עצמן לא נגעו בהן בכוונה. "
+            "מסכי WiFi 'עלים' (wifi_settings.xml וכו') לא נגעו בהם - בלתי נגישים "
+            "ברגע שהכניסה מוסרת, וממש כך WiFi כבוי ברמת החומרה בכל מקרה. "
+            "מפתח החתימה platform אומת ישירות על הקובץ הזה (כולל "
+            "sharedUserId=android.uid.system). שני החלקים אומתו בנפרד (round-trip "
+            "לחלק ה-dex, הרצה אמיתית מול MtkSettings.apk האמיתי לחלק המשאבים) - "
+            "אבל עדיין לא נבדקו משולבים ובפועל על המכשיר."
         ),
     },
 ]

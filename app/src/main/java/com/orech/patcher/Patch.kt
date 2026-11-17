@@ -22,12 +22,29 @@ data class Edit(
     }
 }
 
+/** הסרת אלמנט (לדוגמה שורת Preference) מתוך קובץ משאב XML בינארי בתוך ה-APK, לפי android:key שלו. עובד על resources.arsc/AXML עם ARSCLib - לא דורש dex. */
+data class ResourceRemoval(
+    val path: String, // נתיב בתוך ה-zip, לדוגמה res/xml/top_level_settings.xml
+    val key: String // ערך android:key של האלמנט להסרה
+) {
+    companion object {
+        fun fromJson(o: JSONObject) = ResourceRemoval(
+            path = o.getString("path"),
+            key = o.getString("key")
+        )
+    }
+}
+
 /**
  * תיאור כללי של תיקון אחד - לא קוד קשיח. להוסיף תיקון עתידי = להוסיף אובייקט
  * כזה ל-assets/patches/patches.json, בלי לגעת בקוד של האפליקציה.
  *
  * kind:
- *  - "edit"    - פירוק/עריכה/הרכבה/חתימה/החזרה של קובץ apk/jar (צריך edits + signingKey)
+ *  - "edit"    - פירוק/עריכה/הרכבה/חתימה/החזרה של קובץ apk/jar. יכול לכלול
+ *                edits (dex, דורש baksmali/smali) ו/או resourceRemovals
+ *                (משאבים בינאריים, דורש ARSCLib) - שניהם על אותו קובץ באותה
+ *                שליפה/חתימה/החזרה, כדי שלא יהיו שתי עריכות שונות שמתחרות
+ *                על hash המקור של אותו קובץ.
  *  - "delete"  - מחיקת קובץ מהמכשיר (צריך targetFile+remount, גיבוי אוטומטי לפני מחיקה)
  *  - "setting" - שינוי ערך ב-Settings (settings put) - לא נוגע בשום קובץ
  *  - "info"    - לא מבצע שום פעולה במכשיר, רק מציג הוראות/הערות למשתמש
@@ -45,6 +62,7 @@ data class Patch(
      * זה לא תואם בדיוק - כדי לא להחיל תיקון על קושחה/קובץ שלא אומת מולו. */
     val expectedSha256: String? = null,
     val edits: List<Edit> = emptyList(),
+    val resourceRemovals: List<ResourceRemoval> = emptyList(),
     val settingNamespace: String? = null,
     val settingKey: String? = null,
     val settingValue: String? = null,
@@ -62,6 +80,11 @@ data class Patch(
                 if (editsArr != null) {
                     for (j in 0 until editsArr.length()) edits.add(Edit.fromJson(editsArr.getJSONObject(j)))
                 }
+                val resArr = o.optJSONArray("resourceRemovals")
+                val resourceRemovals = mutableListOf<ResourceRemoval>()
+                if (resArr != null) {
+                    for (j in 0 until resArr.length()) resourceRemovals.add(ResourceRemoval.fromJson(resArr.getJSONObject(j)))
+                }
                 out.add(
                     Patch(
                         id = o.getString("id"),
@@ -73,6 +96,7 @@ data class Patch(
                         signingKey = o.optString("signingKey").ifEmpty { null },
                         expectedSha256 = o.optString("expectedSha256").ifEmpty { null },
                         edits = edits,
+                        resourceRemovals = resourceRemovals,
                         settingNamespace = o.optString("settingNamespace").ifEmpty { null },
                         settingKey = o.optString("settingKey").ifEmpty { null },
                         settingValue = o.optString("settingValue").ifEmpty { null },

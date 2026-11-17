@@ -31,7 +31,7 @@ private sealed class PendingCommit {
  * בכלל על קבצים אחרי עריכה, גם לא APK-ים. קוד החתימה (Signer.kt) לא נמחק -
  * אם מתברר שצריך אותו בעתיד, להחזיר ל-true זה כל מה שצריך.
  */
-private const val SIGN_EDITED_FILES = false
+private const val SIGN_EDITED_FILES = true
 
 class PatchEngine(
     private val context: Context,

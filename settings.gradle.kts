@@ -13,3 +13,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "orech"
 include(":app")
+include(":seller")

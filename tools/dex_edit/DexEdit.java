@@ -204,7 +204,13 @@ public class DexEdit {
             for (ClassDef c : miniDex.getClasses()) { all.add(c); added++; }
             System.out.println("classes: original=" + dex.getClasses().size() + " merged=" + all.size() + " assembled=" + added);
             File merged = File.createTempFile("merged", ".dex");
-            DexPool.writeTo(new FileDataStore(merged), new ImmutableDexFile(ops, all));
+            // keep the original dex version: a lower version (e.g. 035) breaks invoke-static on interface methods (ICCE)
+            byte[] hdr = new byte[8];
+            try (InputStream hin = new FileInputStream(dexFile)) { hin.read(hdr); }
+            int dexVer = Integer.parseInt(new String(hdr, 4, 3, StandardCharsets.US_ASCII));
+            Opcodes wops = Opcodes.forDexVersion(dexVer);
+            System.out.println("dex version kept: " + dexVer);
+            DexPool.writeTo(new FileDataStore(merged), new ImmutableDexFile(wops, all));
             // rewrite zip
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(out))) {
                 for (Enumeration<? extends ZipEntry> en = z.entries(); en.hasMoreElements(); ) {

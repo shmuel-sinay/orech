@@ -86,6 +86,50 @@ public class DexEdit {
             }
             return;
         }
+        if (a[0].equals("align")) {   // align in out : preserve methods, 4-byte align stored entries
+            final long[] count = {0};
+            OutputStream raw = new BufferedOutputStream(new FileOutputStream(a[2]));
+            OutputStream counting = new FilterOutputStream(raw) {
+                @Override public void write(int b) throws IOException { out.write(b); count[0]++; }
+                @Override public void write(byte[] b, int off, int len) throws IOException { out.write(b, off, len); count[0] += len; }
+            };
+            try (ZipFile z = new ZipFile(a[1]); ZipOutputStream zos = new ZipOutputStream(counting)) {
+                for (Enumeration<? extends ZipEntry> en = z.entries(); en.hasMoreElements(); ) {
+                    ZipEntry e = en.nextElement();
+                    ZipEntry ne = new ZipEntry(e.getName());
+                    ne.setTime(e.getTime());
+                    if (e.getMethod() == ZipEntry.STORED) {
+                        ne.setMethod(ZipEntry.STORED); ne.setSize(e.getSize()); ne.setCompressedSize(e.getSize()); ne.setCrc(e.getCrc());
+                        int nameLen = e.getName().getBytes(StandardCharsets.UTF_8).length;
+                        long base = count[0] + 30 + nameLen;
+                        int pad = (int) ((4 - (base % 4)) % 4);
+                        if (pad > 0) {
+                            if (pad < 4) pad += 4;
+                            byte[] extra = new byte[pad];
+                            extra[0] = (byte) 0xD9; extra[1] = (byte) 0x35;
+                            extra[2] = (byte) ((pad - 4) & 0xFF); extra[3] = (byte) (((pad - 4) >> 8) & 0xFF);
+                            ne.setExtra(extra);
+                        }
+                    }
+                    zos.putNextEntry(ne);
+                    try (InputStream is = z.getInputStream(e)) { is.transferTo(zos); }
+                    zos.closeEntry();
+                }
+            }
+            return;
+        }
+        if (a[0].equals("grep")) {
+            try (ZipFile z = new ZipFile(a[1])) {
+                for (String dn : dexNames(z)) {
+                    DexFile d = DexFileFactory.loadDexFile(extract(z, dn), ops);
+                    for (ClassDef c : d.getClasses()) {
+                        String s = disassemble(c);
+                        if (s.contains(a[2])) System.out.println(dn + " " + c.getType());
+                    }
+                }
+            }
+            return;
+        }
         // edit
         String in = a[1], out = a[2];
         Map<String, String> newClassText = new LinkedHashMap<>();   // type -> smali text

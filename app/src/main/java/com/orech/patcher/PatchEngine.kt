@@ -8,13 +8,13 @@ import com.android.tools.smali.dexlib2.Opcodes
 import com.android.tools.smali.smali.Smali
 import com.android.tools.smali.smali.SmaliOptions
 import com.reandroid.apk.ApkModule
+import com.reandroid.archive.ByteInputSource
+import com.reandroid.arsc.chunk.xml.ResXmlDocument
 import com.reandroid.arsc.chunk.xml.ResXmlAttribute
 import com.reandroid.arsc.chunk.xml.ResXmlElement
 import java.io.File
 import java.security.MessageDigest
-import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
 
 /** פעולה אמיתית שנשארה "ממתינה" אחרי ריצה מוצלחת ב"בדיקה בלבד" - כדי ש-commit() יוכל לבצע אותה בלי לחזור על כל הצנרת (pull/פירוק/עריכה/הרכבה/חתימה/אימות). */
 private sealed class PendingCommit {
@@ -299,8 +299,10 @@ class PatchEngine(
         l("עורך משאבים בינאריים (${patch.resourceRemovals.size} הסרות)...")
         val module = ApkModule.loadApkFile(patchedZip)
         var totalRemoved = 0
+        // מסמך אחד לכל קובץ: getResXmlDocument מחזיר עותק חדש בכל קריאה, ועריכות על עותק קודם היו נעלמות.
+        val docs = LinkedHashMap<String, ResXmlDocument>()
         for (removal in patch.resourceRemovals) {
-            val doc = module.getResXmlDocument(removal.path)
+            val doc = docs[removal.path] ?: module.getResXmlDocument(removal.path)?.also { docs[removal.path] = it }
             if (doc == null) {
                 l("לא נמצא קובץ משאב: ${removal.path} - דולג")
                 continue
@@ -324,8 +326,14 @@ class PatchEngine(
             l("אף הסרה לא בוצעה בפועל - לא ממשיכים")
             return false
         }
+        // בלי refresh() כותרת הגודל של ה-XML נשארת ישנה והקובץ לא ניתן לקריאה.
+        for ((path, doc) in docs) {
+            doc.refresh()
+            module.add(ByteInputSource(doc.bytes, path))
+        }
         val afterResources = File(workDir, "${patch.id}_after_res.apk")
         module.writeApk(afterResources)
+        ZipUtil.alignInPlace(afterResources)
         afterResources.copyTo(patchedZip, overwrite = true)
         l("עריכת המשאבים הושלמה (${totalRemoved} אלמנטים הוסרו בסה\"כ)")
         return true
@@ -400,24 +408,8 @@ class PatchEngine(
     }
 
     private fun replaceEntryInZip(src: File, dst: File, entryName: String, newEntryContent: File) {
-        ZipFile(src).use { zf ->
-            ZipOutputStream(dst.outputStream()).use { zos ->
-                val entries = zf.entries()
-                while (entries.hasMoreElements()) {
-                    val e: ZipEntry = entries.nextElement()
-                    if (e.name == entryName) {
-                        zos.putNextEntry(ZipEntry(entryName))
-                        newEntryContent.inputStream().use { it.copyTo(zos) }
-                    } else {
-                        zos.putNextEntry(ZipEntry(e.name))
-                        zf.getInputStream(e).use { it.copyTo(zos) }
-                    }
-                    zos.closeEntry()
-                }
-            }
-        }
+        ZipUtil.rewrite(src, dst, mapOf(entryName to newEntryContent))
     }
-
     /**
      * מחליף טקסטואלית מתודה שלמה (מ-".method ... methodName" ועד ה-".end method"
      * התואם) - בדיוק השיטה שהשתמשנו בה ידנית ב-MT Manager, רק אוטומטית.

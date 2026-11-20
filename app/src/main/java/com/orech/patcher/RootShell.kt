@@ -54,14 +54,36 @@ object RootShell {
         return (catOk && fileOk) to log
     }
 
+    /**
+     * כתיבה במקום עם dd conv=notrunc ואז truncate, ואימות sha256 מול הקובץ המקומי.
+     * לא משתמשים ב-cp: הוא מקצץ את היעד לפני הכתיבה, ובמחיצת מערכת מלאה (למשל M393)
+     * הבלוקים שהתפנו לא חוזרים - והקובץ נשאר קטוע ופגום.
+     */
     fun push(localPath: String, remotePath: String, remount: String): Pair<Boolean, String> {
+        val local = File(localPath)
+        val size = local.length()
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        local.inputStream().use { input ->
+            val buf = ByteArray(64 * 1024)
+            while (true) {
+                val n = input.read(buf)
+                if (n <= 0) break
+                digest.update(buf, 0, n)
+            }
+        }
+        val hash = digest.digest().joinToString("") { "%02x".format(it) }
         val results = exec(
             "mount -o remount,rw $remount",
-            "cp '$localPath' '$remotePath'",
-            "chmod 644 '$remotePath'"
+            "dd if='$localPath' of='$remotePath' bs=1048576 conv=notrunc",
+            "truncate -s $size '$remotePath'",
+            "chmod 644 '$remotePath'",
+            "sync",
+            "sha256sum '$remotePath'"
         )
-        val ok = results.all { it.second == 0 }
-        val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" }
+        val hashOk = results.last().third.trim().startsWith(hash)
+        val ok = results.all { it.second == 0 } && hashOk
+        val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" } +
+            "\n" + (if (hashOk) "אימות sha256: תקין" else "אימות sha256: לא תואם (צפוי $hash)")
         return ok to log
     }
 

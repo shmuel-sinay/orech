@@ -1,5 +1,6 @@
 package com.android.packageinstaller;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -7,7 +8,8 @@ import java.util.zip.ZipFile;
 
 /**
  * Install-time check: refuse APKs that carry a video decoder library or that declare any
- * "video/" mime type in their manifest. Pure java, no framework calls.
+ * "video/" mime type in their manifest. Accepts a single APK or an install directory
+ * (base.apk and splits). Pure java, no framework calls.
  */
 public final class VideoGuard {
     private static final String[] LIBS = {
@@ -17,11 +19,29 @@ public final class VideoGuard {
 
     private VideoGuard() {}
 
-    public static boolean blocked(String apkPath) {
-        if (apkPath == null) return false;
+    public static boolean blocked(String path) {
+        if (path == null) return false;
+        try {
+            File f = new File(path);
+            if (f.isDirectory()) {
+                File[] files = f.listFiles();
+                if (files == null) return false;
+                for (int i = 0; i < files.length; i++) {
+                    String n = files[i].getName().toLowerCase();
+                    if (n.endsWith(".apk") && blockedApk(files[i])) return true;
+                }
+                return false;
+            }
+            return blockedApk(f);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static boolean blockedApk(File apk) {
         ZipFile z = null;
         try {
-            z = new ZipFile(apkPath);
+            z = new ZipFile(apk);
             Enumeration<? extends ZipEntry> e = z.entries();
             while (e.hasMoreElements()) {
                 ZipEntry en = e.nextElement();

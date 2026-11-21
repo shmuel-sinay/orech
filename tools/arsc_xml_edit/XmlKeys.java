@@ -39,6 +39,12 @@ public class XmlKeys {
         String[] pk = line.split("\\|");
         ResXmlDocument d = edited.containsKey(pk[0]) ? edited.get(pk[0]) : m.getResXmlDocument(pk[0]);
         if (d == null) { System.out.println("MISSING FILE " + pk[0]); continue; }
+        if (pk.length == 3 && pk[2].startsWith("-")) {
+          List<ResXmlElement> te = withKey(d, kk -> pk[1].equals(kk));
+          if (te.isEmpty()) { System.out.println("NOT FOUND " + line); continue; }
+          for (ResXmlElement e : te) e.removeAttributesWithName(pk[2].substring(1));
+          edited.put(pk[0], d); removed++; System.out.println("ATTR REMOVED " + line); continue;
+        }
         if (pk[1].equals("*")) { d.getDocumentElement().removeElements(e -> true); edited.put(pk[0], d); removed++; System.out.println("EMPTIED " + pk[0]); continue; }
         List<ResXmlElement> t = withKey(d, k -> pk[1].equals(k));
         if (t.isEmpty()) { System.out.println("NOT FOUND " + line); continue; }

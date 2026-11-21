@@ -7,8 +7,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * Install-time check: refuse APKs that carry a video decoder library or that declare any
- * "video/" mime type in their manifest. Accepts a single APK or an install directory
+ * Install-time check: refuse APKs that carry a video decoder library, declare any "video/" mime
+ * type in their manifest, or can install other apps (INSTALL_PACKAGES permissions). Accepts a single APK or an install directory
  * (base.apk and splits). Pure java, no framework calls.
  */
 public final class VideoGuard {
@@ -19,9 +19,13 @@ public final class VideoGuard {
 
     private VideoGuard() {}
 
+    /** Development escape hatch: a root-created flag file in /data/system turns the guard off. */
+    private static final String BYPASS_FLAG = "/data/system/orech_allow_install";
+
     public static boolean blocked(String path) {
         if (path == null) return false;
         try {
+            if (new File(BYPASS_FLAG).exists()) return false;
             File f = new File(path);
             if (f.isDirectory()) {
                 File[] files = f.listFiles();
@@ -80,7 +84,12 @@ public final class VideoGuard {
             // string pool is UTF-8 or UTF-16LE: look for "video/" in both
             byte[] u8 = {'v', 'i', 'd', 'e', 'o', '/'};
             byte[] u16 = {'v', 0, 'i', 0, 'd', 0, 'e', 0, 'o', 0, '/', 0};
-            return indexOf(buf, len, u8) >= 0 || indexOf(buf, len, u16) >= 0;
+            if (indexOf(buf, len, u8) >= 0 || indexOf(buf, len, u16) >= 0) return true;
+            // apps that can install other apps (REQUEST_INSTALL_PACKAGES / INSTALL_PACKAGES)
+            byte[] i8 = "INSTALL_PACKAGES".getBytes("US-ASCII");
+            byte[] i16 = new byte[i8.length * 2];
+            for (int k = 0; k < i8.length; k++) { i16[k * 2] = i8[k]; i16[k * 2 + 1] = 0; }
+            return indexOf(buf, len, i8) >= 0 || indexOf(buf, len, i16) >= 0;
         } finally {
             in.close();
         }

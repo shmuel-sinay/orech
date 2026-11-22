@@ -5,16 +5,37 @@
     <uses-permission android:name="android.permission.MANAGE_APP_OPS_MODES" />
     <uses-permission android:name="android.permission.GET_APP_OPS_STATS" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <application android:label="מיקום מדומה" android:icon="@drawable/ic_mock" android:hasCode="true">
-        <activity android:name=".MockActivity" android:exported="true" android:label="מיקום מדומה" android:icon="@drawable/ic_mock"
+    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+    <application android:label="מיקום ב-USB" android:icon="@drawable/ic_mock" android:hasCode="true">
+        <activity android:name=".MockActivity" android:exported="true" android:label="מיקום ב-USB"
+            android:icon="@drawable/ic_mock"
             android:theme="@android:style/Theme.DeviceDefault.Settings">
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
             </intent-filter>
             <meta-data android:name="com.android.settings.category" android:value="com.android.settings.category.ia.system" />
-            <meta-data android:name="com.android.settings.summary" android:value="בחירת אפליקציית GPS חיצונית" />
+            <meta-data android:name="com.android.settings.summary" android:value="משדר GPS מובנה (USB או בלוטוס) ואפליקציות מיקום חיצוניות" />
             <meta-data android:name="com.android.settings.icon" android:resource="@drawable/ic_mock" />
             <meta-data android:name="com.android.settings.icon_tintable" android:value="true" />
         </activity>
+        <activity android:name=".UsbAttachActivity" android:exported="true" android:theme="@android:style/Theme.NoDisplay"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/usb_filter" />
+        </activity>
+        <service android:name=".GpsFeedService" android:exported="false" android:foregroundServiceType="connectedDevice|location" />
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

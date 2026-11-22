@@ -1,0 +1,10 @@
+const fs=require("fs"),z=require("zlib");
+const a=fs.readFileSync(process.argv[2]), b=fs.readFileSync("boot_unlock.img");
+const page=2048, k=a.readUInt32LE(8), al=n=>Math.ceil(n/page)*page;
+console.log("kernel equal:", a.slice(page,page+k).equals(b.slice(page,page+k)));
+const ra=a.readUInt32LE(16), rb=b.readUInt32LE(16);
+const offR=page+al(k);
+const da=a.slice(offR+al(ra)), db=b.slice(offR+al(rb));
+console.log("dtb equal:", da.slice(0,101661).equals(db.slice(0,101661)));
+console.log("header same except ramdisk size:", a.slice(0,16).equals(b.slice(0,16)) && a.slice(20,page).equals(b.slice(20,page)));
+const cp=z.gunzipSync(b.slice(offR,offR+rb)); console.log("ramdisk ok, cpio bytes", cp.length, "contains rc:", cp.includes("orech_unlock_done"));

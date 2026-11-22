@@ -72,8 +72,56 @@ class SellerActivity : AppCompatActivity() {
         applyButton.setOnClickListener { if (!busy) askPin() }
 
         buildRows()
+        buildIdRow()
         refreshApply()
         detectState()
+    }
+
+
+    private lateinit var idView: TextView
+
+    /** מספר מכשיר קצר: נשמר ב-nvdata (שורד איפוס יצרן), מוצג בהגדרות, ונרשם גם ברשימת המכירות של המוכר. */
+    private fun buildIdRow() {
+        idView = TextView(this).apply {
+            textSize = 16f
+            setPadding(32, 24, 32, 24)
+            text = "מספר מכשיר: ..."
+            setOnClickListener { if (!busy) askDeviceId() }
+        }
+        optionsBox.addView(idView, 0)
+        thread {
+            val r = RootShell.exec("cat /mnt/vendor/nvdata/orech_id 2>/dev/null").firstOrNull()
+            val cur = r?.takeIf { it.second == 0 }?.third?.trim().orEmpty()
+            runOnUiThread { idView.text = "מספר מכשיר: " + (if (cur.isEmpty()) "לא הוגדר" else cur) + "  (לחיצה לשינוי)" }
+        }
+    }
+
+    private fun askDeviceId() {
+        val input = EditText(this).apply { hint = "3-8 תווים, אותיות ומספרים"; inputType = InputType.TYPE_CLASS_TEXT }
+        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
+            .setTitle("מספר מכשיר")
+            .setView(input)
+            .setPositiveButton("שמור") { _, _ ->
+                val id = input.text.toString().trim().uppercase()
+                if (!Regex("[A-Z0-9]{3,8}").matches(id)) { log("מספר לא תקין"); return@setPositiveButton }
+                thread {
+                    val r = RootShell.exec(
+                        "echo $id > /mnt/vendor/nvdata/orech_id",
+                        "setprop persist.sys.orech_id $id"
+                    )
+                    val ok = r.all { it.second == 0 }
+                    if (ok) {
+                        val f = File(getExternalFilesDir(null), "sales.csv")
+                        f.appendText(java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date()) + "," + id + "\n")
+                    }
+                    runOnUiThread {
+                        log(if (ok) "מספר מכשיר נשמר: $id (רשום ב-sales.csv)" else "השמירה נכשלה")
+                        if (ok) idView.text = "מספר מכשיר: $id  (לחיצה לשינוי)"
+                    }
+                }
+            }
+            .setNegativeButton("ביטול", null)
+            .show()
     }
 
     private fun loadProfiles(): List<Profile> {
@@ -219,6 +267,26 @@ class SellerActivity : AppCompatActivity() {
                 if (ok) for (patch in toRun) if (ok && !engine.commit(patch) { log(it) }) ok = false
             }
             if (ok && p.storeInstallPending) log("התקנת החנות הפנימית עדיין לא הוגדרה. מדלג.")
+
+            if (ok) {
+                // השינוי אושר ב-PIN: מעדכנים את מצב הבקרה, ומפעילים אותה (מוחקים את noenforce של שלב הבדיקות).
+                // מפעילים רק אם approve הצליח וגם check מחזיר ריק: בקרה פעילה עם מניפסט לא מעודכן מכבה את
+                // המכשיר בעלייה הבאה בלי adb, ומחזירים אותו רק בצריבה מחדש.
+                val res = RootShell.exec(
+                    "sh /mnt/vendor/protect_s/orech/orech_integrity.sh approve",
+                    "sh /mnt/vendor/protect_s/orech/orech_integrity.sh check"
+                )
+                val approved = res.getOrNull(0)?.second == 0
+                val checked = res.getOrNull(1)?.let { it.second == 0 && it.third.isBlank() } == true
+                if (approved && checked) {
+                    val rm = RootShell.exec("rm -f /mnt/vendor/protect_s/orech/noenforce").firstOrNull()
+                    ok = rm != null && rm.second == 0
+                    if (!ok) log("הפעלת הבקרה נכשלה (מחיקת noenforce). לא הוסרה האפליקציה.")
+                } else {
+                    ok = false
+                    log("עדכון בקרת השלמות נכשל או לא עבר אימות. הבקרה לא הופעלה (noenforce נשאר) ולא הוסרה האפליקציה.")
+                }
+            }
 
             if (ok) {
                 log("הושלם. האפליקציה מסירה את עצמה והמכשיר יופעל מחדש.")

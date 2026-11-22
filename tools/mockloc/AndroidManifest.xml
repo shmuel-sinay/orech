@@ -6,13 +6,14 @@
     <uses-permission android:name="android.permission.GET_APP_OPS_STATS" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <application android:label="מיקום מדומה" android:icon="@drawable/ic_mock" android:hasCode="true">
-        <activity android:name=".MockActivity" android:exported="true" android:label="מיקום מדומה"
+        <activity android:name=".MockActivity" android:exported="true" android:label="מיקום מדומה" android:icon="@drawable/ic_mock"
             android:theme="@android:style/Theme.DeviceDefault.Settings">
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
             </intent-filter>
             <meta-data android:name="com.android.settings.category" android:value="com.android.settings.category.ia.system" />
             <meta-data android:name="com.android.settings.summary" android:value="בחירת אפליקציית GPS חיצונית" />
+            <meta-data android:name="com.android.settings.icon" android:resource="@drawable/ic_mock" />
             <meta-data android:name="com.android.settings.icon_tintable" android:value="true" />
         </activity>
     </application>

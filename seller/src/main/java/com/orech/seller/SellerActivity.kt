@@ -269,8 +269,11 @@ class SellerActivity : AppCompatActivity() {
             if (ok && p.storeInstallPending) log("התקנת החנות הפנימית עדיין לא הוגדרה. מדלג.")
 
             if (ok) {
-                // השינוי אושר ב-PIN: מעדכנים את מצב הבקרה כדי שהמכשיר לא יכבה בגלל השינוי
-                val ap = RootShell.exec("sh /mnt/vendor/protect_s/orech/orech_integrity.sh approve").firstOrNull()
+                // השינוי אושר ב-PIN: מעדכנים את מצב הבקרה, ומפעילים אותה (מוחקים את noenforce של שלב הבדיקות)
+                val ap = RootShell.exec(
+                    "sh /mnt/vendor/protect_s/orech/orech_integrity.sh approve",
+                    "rm -f /mnt/vendor/protect_s/orech/noenforce"
+                ).firstOrNull()
                 if (ap == null || ap.second != 0) log("אזהרה: עדכון בקרת השלמות נכשל")
                 log("הושלם. האפליקציה מסירה את עצמה והמכשיר יופעל מחדש.")
                 SelfDestruct.run(this)

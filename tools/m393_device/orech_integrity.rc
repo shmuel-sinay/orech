@@ -1,3 +1,13 @@
+service orech_integrity_boot /system/bin/sh /mnt/vendor/protect_s/orech/orech_integrity.sh boot
+    user root
+    group root
+    seclabel u:r:magisk:s0
+    oneshot
+    disabled
+
+on post-fs-data
+    exec_start orech_integrity_boot
+
 service orech_integrity /system/bin/sh /mnt/vendor/protect_s/orech/orech_integrity.sh monitor
     class late_start
     user root

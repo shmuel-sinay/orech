@@ -64,7 +64,7 @@ public class MockActivity extends Activity {
     }
 
     private boolean allowed(ApplicationInfo ai) {
-        return ops.unsafeCheckOpNoThrow(OP, ai.uid, ai.packageName) == AppOpsManager.MODE_ALLOWED;
+        return ops.unsafeCheckOpRawNoThrow(OP, ai.uid, ai.packageName) == AppOpsManager.MODE_ALLOWED;
     }
 
     private void set(ApplicationInfo ai, boolean on) {
@@ -72,7 +72,8 @@ public class MockActivity extends Activity {
             AppOpsManager.class.getMethod("setMode", String.class, int.class, String.class, int.class)
                 .invoke(ops, OP, ai.uid, ai.packageName, on ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_ERRORED);
         } catch (Throwable t) {
-            Toast.makeText(this, "נכשל: " + t, Toast.LENGTH_LONG).show();
+            Throwable c = t.getCause() != null ? t.getCause() : t;
+            Toast.makeText(this, "נכשל: " + c, Toast.LENGTH_LONG).show();
         }
     }
 }

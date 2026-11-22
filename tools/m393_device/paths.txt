@@ -11,3 +11,6 @@
 /vendor/etc/media_codecs_mediatek_video.xml
 /vendor/etc/media_codecs_performance.xml
 /product/app/OrechMockLoc/OrechMockLoc.apk
+/dev/block/by-name/boot_a
+/dev/block/by-name/init_boot_a
+/dev/block/by-name/vendor_boot_a

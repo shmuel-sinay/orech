@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bluetooth_settings_title">בלוטוס</string>
+    <string name="status_device_wifi_mac_address">כתובת MAC של XXX</string>
+</resources>

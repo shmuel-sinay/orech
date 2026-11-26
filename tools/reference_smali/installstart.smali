@@ -281,7 +281,7 @@
     new-instance v0, Landroid/widget/TextView;
     invoke-direct {v0, p0}, Landroid/widget/TextView;-><init>(Landroid/content/Context;)V
 
-    const-string v1, "המכשיר שלך חסום להתקנה"
+    const-string v1, "ההתקנה חסומה במכשיר הזה"
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
 
     const/16 v1, 0x11
@@ -291,9 +291,10 @@
     invoke-virtual {v0, v1, v1, v1, v1}, Landroid/widget/TextView;->setPadding(IIII)V
 
     new-instance v2, Landroid/app/AlertDialog$Builder;
-    invoke-direct {v2, p0}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;)V
+    const v3, 0x010302d2
+    invoke-direct {v2, p0, v3}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;I)V
 
-    const-string v1, "הודעת מערכת"
+    const-string v1, "התקנת אפליקציות"
     invoke-virtual {v2, v1}, Landroid/app/AlertDialog$Builder;->setTitle(Ljava/lang/CharSequence;)Landroid/app/AlertDialog$Builder;
     move-result-object v2
 
@@ -703,7 +704,8 @@
     iput-object v0, p0, Lcom/android/packageinstaller/InstallStart;->mPasswordEditText:Landroid/widget/EditText;
 
     new-instance v1, Landroid/app/AlertDialog$Builder;
-    invoke-direct {v1, p0}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;)V
+    const v2, 0x010302d2
+    invoke-direct {v1, p0, v2}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;I)V
 
     const-string v2, "\u05d4\u05d6\u05df \u05e1\u05d9\u05e1\u05de\u05d0"
     invoke-virtual {v1, v2}, Landroid/app/AlertDialog$Builder;->setTitle(Ljava/lang/CharSequence;)Landroid/app/AlertDialog$Builder;

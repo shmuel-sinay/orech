@@ -1,0 +1,13 @@
+01:16:51 start
+01:16:52 OK /vendor/overlay/OrechSettingsHe/OrechSettingsHe.apk
+01:16:53 OK /vendor/bin/orech_vguard.sh
+01:16:54 OK /system/build.prop
+01:16:55 seed => -rwxr-xr-x 1 root root 3768 2025-11-07 15:45 /vendor/bin/orech_vguard.sh com.topjohnwu.magisk com.koshertech.su bin.mt.plus.canary bin.mt.plus ru.maximoff.apktool in.krosbits.musicolet
+01:16:55 rebooting
+01:17:58 boot seconds=63
+01:17:58 boot completed=True
+01:18:18 check [su -c 'sha256sum /system/framework/servi] => a22df74a1d1025db31407b3f6570264161282d07a7713a71aa9927f9ca3b62b5 /system/framework/services.jar 148367ae660f2ea13ffdbf02fc0e484dfca53fd5f4f3180fc484878028dae6c0 /system/system_ext/priv-app/MtkSettings/MtkSettings.apk 123d3d0dc4c35e327901e1055cbb9452f2eedd1af2058b3d835252601074f6ec /system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk bd5100de2182a271171b1048f0616bca0f1ab201d23dad0728e1abfab00ae00b /system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+01:18:18 check [getprop init.svc.orech_vguard] => running
+01:18:18 check [settings get global adb_enabled] => 1
+01:18:19 check [logcat -d | grep -c 'FATAL EXCEPTION'] => 0
+01:18:19 finished6-ok

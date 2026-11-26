@@ -13,7 +13,6 @@ import com.reandroid.arsc.chunk.xml.ResXmlDocument
 import com.reandroid.arsc.chunk.xml.ResXmlAttribute
 import com.reandroid.arsc.chunk.xml.ResXmlElement
 import java.io.File
-import java.security.MessageDigest
 import java.util.zip.ZipFile
 
 /** פעולה אמיתית שנשארה "ממתינה" אחרי ריצה מוצלחת ב"בדיקה בלבד" - כדי ש-commit() יוכל לבצע אותה בלי לחזור על כל הצנרת (pull/פירוק/עריכה/הרכבה/חתימה/אימות). */
@@ -360,7 +359,7 @@ class PatchEngine(
      */
     private fun checkExpectedHash(patch: Patch, file: File, l: (String) -> Unit): Boolean {
         val expected = patch.expectedSha256 ?: return true
-        val actual = sha256(file)
+        val actual = FileHash.sha256(file)
         if (actual.equals(expected, ignoreCase = true)) {
             l("בדיקת SHA-256 עברה - זה בדיוק הקובץ שהתיקון אומת מולו")
             return true
@@ -370,19 +369,6 @@ class PatchEngine(
         l("  בפועל: $actual")
         l("  (קובץ שונה/גרסה אחרת/קובץ שכבר תוקן בעבר - לא מניחים שההחלפה בטוחה)")
         return false
-    }
-
-    private fun sha256(file: File): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        file.inputStream().use { input ->
-            val buf = ByteArray(8192)
-            while (true) {
-                val n = input.read(buf)
-                if (n < 0) break
-                digest.update(buf, 0, n)
-            }
-        }
-        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     /** סורק את כל ה-classes*.dex בתוך ה-zip ומחזיר את הראשון שמכיל אחת מהמחלקות הנתונות. */
@@ -411,18 +397,12 @@ class PatchEngine(
         ZipUtil.rewrite(src, dst, mapOf(entryName to newEntryContent))
     }
     /**
-     * מחליף טקסטואלית מתודה שלמה (מ-".method ... methodName" ועד ה-".end method"
-     * התואם) - בדיוק השיטה שהשתמשנו בה ידנית ב-MT Manager, רק אוטומטית.
+     * מחליף טקסטואלית מתודה שלמה בקובץ smali - בדיוק השיטה שהשתמשנו בה ידנית
+     * ב-MT Manager, רק אוטומטית. הלוגיקה עצמה (בלי קריאה/כתיבה לקובץ) נמצאת
+     * ב-SmaliEdit, כדי שאפשר לבדוק אותה ב-JVM בלי תלות באנדרואיד.
      */
     private fun replaceMethod(smaliFile: File, methodName: String, newMethodBody: String): Boolean {
-        val text = smaliFile.readText()
-        val startRegex = Regex("""\.method[^\n]*\s$methodName\(""")
-        val match = startRegex.find(text) ?: return false
-        val methodStart = text.lastIndexOf(".method", match.range.first)
-        val endIdx = text.indexOf(".end method", match.range.last)
-        if (methodStart == -1 || endIdx == -1) return false
-        val afterEnd = endIdx + ".end method".length
-        val newText = text.substring(0, methodStart) + newMethodBody.trim() + text.substring(afterEnd)
+        val newText = SmaliEdit.replaceMethod(smaliFile.readText(), methodName, newMethodBody) ?: return false
         smaliFile.writeText(newText)
         return true
     }

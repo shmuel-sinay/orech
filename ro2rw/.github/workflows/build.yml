@@ -1,0 +1,193 @@
+name: Build RO2RW PC
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q mono-mcs mono-devel erofs-utils e2fsprogs android-sdk-libsparse-utils attr lz4 xz-utils cpio gdisk
+      - name: Run core tests
+        run: sudo bash tests/run-tests.sh "$RUNNER_TEMP/t"
+
+  build:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Checkout mtkclient (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: bkerler/mtkclient
+          ref: 118a000a83ea31c4f427fe5225abfe964546e05e
+          path: mtkclient-src
+      - name: Build mtk.exe (PyInstaller)
+        shell: pwsh
+        working-directory: mtkclient-src
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+          pyinstaller --noconfirm mtk_console.spec
+          $exe = Get-ChildItem dist -Filter "mtk_console_*.exe" | Select-Object -First 1
+          New-Item -ItemType Directory -Force ../src/res | Out-Null
+          Copy-Item $exe.FullName ../src/res/mtk.exe
+          Copy-Item LICENSE ../src/res/mtkclient-LICENSE.txt
+          ../src/res/mtk.exe --help | Select-Object -First 5
+          if ($LASTEXITCODE -ne 0) { throw "mtk.exe does not start" }
+      - name: Download official Magisk
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $rel = Invoke-RestMethod -Headers @{ Authorization = "Bearer $env:GH_TOKEN"; "User-Agent" = "RO2RW-PC" } https://api.github.com/repos/topjohnwu/Magisk/releases/latest
+          $apk = $rel.assets | Where-Object { $_.name -match '^Magisk-v.*\.apk$' } | Select-Object -First 1
+          if (-not $apk) { throw "Magisk apk not found" }
+          Invoke-WebRequest $apk.browser_download_url -OutFile src/res/Magisk.apk
+          Set-Content -NoNewline src/res/Magisk.version $rel.tag_name
+          "Magisk $($rel.tag_name): $((Get-Item src/res/Magisk.apk).Length) bytes"
+      - name: Build fast engine (mtkflash.exe)
+        shell: pwsh
+        run: |
+          pip install pyusb pyserial libusb-package pyinstaller
+          pyinstaller --onefile --name mtkflash --distpath distfast `
+            --paths third_party/mtkflash `
+            --collect-all libusb_package `
+            third_party/mtkflash/ro2rw_engine.py
+          Copy-Item distfast/mtkflash.exe src/res/mtkflash.exe
+          Copy-Item third_party/mtkflash/DA_PL.bin src/res/DA_PL.bin
+          Copy-Item third_party/mtkflash/ATTRIBUTION.md src/res/mtkflash-README.txt
+          Copy-Item LICENSE src/res/mtkflash-LICENSE.txt
+          src/res/mtkflash.exe --help | Select-Object -First 3
+          if ($LASTEXITCODE -ne 0) { throw "mtkflash.exe does not start" }
+      - name: Build EXE
+        run: dotnet build src/RO2RW-PC.csproj -c Release -o out
+      - name: Check embedded tools
+        shell: pwsh
+        run: |
+          $size = (Get-Item out/RO2RW-PC.exe).Length
+          "RO2RW-PC.exe: $size bytes"
+          if ($size -lt 40MB) { throw "bundled tools were not embedded" }
+      - name: Build installer (Inno Setup)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          $v = ([xml](Get-Content src/RO2RW-PC.csproj)).Project.PropertyGroup.Version | Select-Object -First 1
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          & $iscc "/DAppVer=$v" "/DSrcExe=$(Resolve-Path out/RO2RW-PC.exe)" installer/RO2RW-PC.iss
+          if ($LASTEXITCODE -ne 0) { throw "installer build failed" }
+          Get-Item installer/RO2RW-PC-Setup.exe | ForEach-Object { "installer: $($_.Length) bytes" }
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: RO2RW-PC
+          path: out/RO2RW-PC.exe
+      - name: Publish dev build
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: RO2RW PC (גרסת פיתוח)
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: false
+          files: |
+            out/RO2RW-PC.exe
+            installer/RO2RW-PC-Setup.exe
+          body: |
+            גרסת פיתוח שנבנתה אוטומטית מהקומיט ${{ github.sha }}.
+            לגרסה היציבה ראו את המהדורה האחרונה.
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = ([xml](Get-Content src/RO2RW-PC.csproj)).Project.PropertyGroup.Version | Select-Object -First 1
+          "tag=v$v" >> $env:GITHUB_OUTPUT
+      - name: Publish release
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: RO2RW PC ${{ steps.ver.outputs.tag }}
+          prerelease: false
+          make_latest: true
+          fail_on_unmatched_files: false
+          files: |
+            out/RO2RW-PC.exe
+            installer/RO2RW-PC-Setup.exe
+          body: |
+            ## RO2RW PC ${{ steps.ver.outputs.tag }}
+
+            ערכת כלים לווינדוס לעריכת רום של אנדרואיד, על המחשב בלבד.
+
+            ### הורדה והפעלה
+            1. **מומלץ: RO2RW-PC-Setup.exe** - מתקין ל-C:\RO2RW עם קיצורי דרך, והפרויקטים נשמרים בתוך תיקיית התוכנה. עדכון עתידי מתקין על הקיים בלי לאבד פרויקטים.
+            או **RO2RW-PC.exe** - גרסה ניידת בלי התקנה (שימו בתיקייה משלה).
+            2. הפעילו (Windows 10/11). אם מופיעה אזהרת SmartScreen: "מידע נוסף" ואז "הפעל בכל זאת".
+            3. "פרויקט חדש": נותנים שם, בדרך כלל שם המכשיר.
+            4. "הוסף קבצים" (או גרירה): super, boot / init_boot, vbmeta, lk.
+            5. "בצע עריכה": הקבצים הערוכים נשמרים בתיקייה **ערוך** בתוך הפרויקט, עם אותם שמות, יחד עם scatter ל-SP Flash Tool שבו מסומנות רק המחיצות שנערכו.
+
+            ### דרכי עבודה
+            - **🧙 אשף**: שלב אחרי שלב, כולל כמה MB להוסיף לכל מחיצה, וצריבה חזרה בסיום
+            - **פרויקט ידני**: שליטה מלאה. קליק ימני על קובץ: עריכה שלו בלבד, שינוי סוג העריכה, צריבה, מידע
+            - **כלים בודדים**: כל כלי לבד, על קובץ אחד
+            - **⬆ צרוב חזרה**: צריבת תיקיית "ערוך" למכשיר עם mtkclient (שמות המחיצות נבדקים מול gpt.bin, sparse מומר אוטומטית, מחיצות רגישות חסומות)
+
+            ### חדש בגרסה הזו
+            - שאיבה וצריבה דרך COM / VCOM עם mtkclient (בלי UsbDk): מנוע חדש בבורר המנועים, וברירת המחדל כשאין UsbDk. זה אותו דרייבר ש-SP Flash Tool משתמש בו, עם פרוטוקול mtkclient הבשל. אם נכשל, שלח את mtkclient_log.txt מתיקיית הפרויקט
+            - ממשק חדש: לשונית עליונה נפרדת לכל כלי (פרויקט וקבצים, RO2RW, Root, AVB, LK, שאיבה, צריבה, SP Flash Tool, כלים) - במקום תפריטים מקוננים. בכל לשונית בוחרים קובץ ולוחצים "בצע"
+            - SP Flash Tool הוא עכשיו מנוע לבחירה בלשוניות שאיבה וצריבה, לצד mtkclient והמנוע המהיר. בחירה בו מפעילה את הצריבה אוטומטית דרך SP (Download Only), עובד עם דרייבר ה-VCOM
+            - המנוע נשמר בין הפעלות. הלוג נשאר בתחתית (דאבל-קליק לחלון נפרד)
+            - הערה: המנוע המהיר דרך serial עדיין נכשל בהעלאת DA במכשירים מסוימים (SEND_DA) - לצריבה ושאיבה אמינות במכשיר כזה בחר SP Flash Tool
+            - תיקון: המנוע דרך serial התחבר למכשיר (COM, בלי UsbDk!) אבל קרס על הדפסת תו יוניקוד בקונסול עברי (cp1255). עכשיו הפלט מאולץ ל-UTF-8 וזה לא קורה
+            - מנוע מהיר דרך COM / serial (תפריט מכשיר ← מנוע): עובד עם דרייבר ה-VCOM של MediaTek, בלי UsbDk - בדיוק הדרייבר שעובד במכשירים שרק SP קולט. מהיר (טוען DA), קוד פתוח, בלי SP. התחל בשאיבה (קריאה בלבד) כדי לוודא שהחיבור עובד
+            - SP Flash Tool נייד: תפריט מכשיר ← "התקן SP Flash Tool לתוך התוכנה" מעתיק את תיקיית SP שלך ל-tools, וכך היא נמצאת ומנוהלת תמיד מתוך התוכנה (עדיין לא ניתן לארוז את SP עצמה - היא סגורה)
+            - מצב SP אוטומטי: אפשרות להזין מספר COM (אם אין זיהוי אוטומטי). מאושר על SP Flash Tool v5
+            - Magisk: כפתור "הורד גרסה" בלשונית Magisk - הקלד גרסה (למשל 26) והיא תורד מ-GitHub ותשמש לעריכה. שימושי כשהגרסה האחרונה לא מתאימה למכשיר
+            - SP Flash Tool אוטומטי (ניסיוני): כפתור SP מציע "אוטומטי" - RO2RW מייצר קובץ XML ומריץ את flash_tool.exe במצב console (Download Only, בלי format) כך שהצריבה מתבצעת דרך SP בלי ללחוץ ידנית. עובד עם הדרייבר של SP (VCOM), גם כשה-UsbDk לא נתמך. דורש גרסת SP עם מצב console
+            - LK: נוסף תיקון dm_verity / fastboot-unlock / red_state (מקור: lkpatcher). זה מה שהיה גורם למכשיר לדרוש לחיצה כדי לדלוק - עכשיו מטופל אוטומטית יחד עם Orange State
+            - SP Flash Tool במרכז: כפתור ראשי בולט (עובד גם כשדרייבר UsbDk לא נתמך במכשיר); "צרוב (USB)" סומן כדורש UsbDk
+            - חלון יומן נפרד שאפשר להגדיל/למקסם (תפריט תצוגה, או דאבל-קליק על היומן) - למסכים קטנים
+            - חלון מתחיל ממוקסם במסך קטן; אחוזי התקדמות חיים בשורת המצב
+            - "סמן הכל / נקה הכל" לבחירת מחיצות (גם בחלון הצריבה ובתכנון)
+            - הסרת WiFi למכשיר מסונן: מוחק את wpa_supplicant מ-vendor (לא נוגע בקובצי XML), עם גיבוי. אופציה ב-RO2RW ובאשף
+            - עיצוב ממשק חדש, בהיר ונקי (כותרת כחולה, כפתורים שטוחים, רקע בהיר)
+            - מנוע צריבה/שאיבה נוסף לבחירה: "המנוע המהיר" מאת alir325000 (ניסיוני, מהיר יותר) לצד mtkclient (ברירת מחדל, בטוח). בתפריט מכשיר
+            - כפתור "פתח ב-SP Flash Tool" + חלון "מדריך SP Flash Tool": צריבה ידנית של הקבצים שכבר ערכת (בלי לערוך מחדש) וגיבוי ReadBack - למכשירים שרק דרייבר ה-VCOM של SP קולט
+            - עצירה באמצע של כל פעולה (ביטול / Esc). קבצים חלקיים נמחקים
+            - תכנון מפורט של super: לכל מחיצה בוחרים אם להמיר וכמה MB להוסיף, עם מד מקום פנוי
+            - Magisk: RECOVERYMODE, PATCHVBMETAFLAG · vbmeta: לכבות הכול, רק verity או רק verification · LK: בחירת גרסת אנדרואיד
+            - עורך HEX עם `??` כתו כללי ותבניות מוכנות
+            - הסבר על כל אפשרות, מדריך מפורט (F1), קיצורי מקשים, הגדלה של התצוגה, מיקום לתיקיית הפרויקטים
+
+            ### כלים
+            - **שאיבת רום (mtkclient מובנה)**: שואב את כל המחיצות לתוך הפרויקט בשמות המחיצות, ויוצר scatter
+            - **RO2RW**: super.img ל-ext4 לקריאה וכתיבה (raw, sparse ומפוצל; EROFS ו-ext4)
+            - **Root עם Magisk (מובנה)**: עריכת boot או init_boot על המחשב, כמו אפליקציית Magisk. ה-ABI מזוהה אוטומטית
+            - **ביטול AVB**: vbmeta עם verity ו-verification כבויים
+            - **הסרת Orange State**: lk בלי ההשהיה של 5 שניות ובלי טקסט האזהרה
+
+            ### שאיבה מהמכשיר
+            בפעם הראשונה לוחצים "דרייבר USB" כדי להתקין את UsbDk. אחר כך: "שאב רום מהמכשיר", מכבים את המכשיר, מחזיקים את לחצני העוצמה ומחברים כבל.
+
+            ### רכיבים מובנים ורישיונות
+            - mtkclient מאת bkerler, ‏GPLv3: https://github.com/bkerler/mtkclient/tree/118a000a83ea31c4f427fe5225abfe964546e05e
+            - Magisk מאת topjohnwu, ‏GPLv3: https://github.com/topjohnwu/Magisk (המהדורה הרשמית האחרונה בזמן הבנייה)
+
+            ⚠️ גבו את המכשיר לפני הצריבה. האחריות על המשתמש.

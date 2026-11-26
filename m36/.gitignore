@@ -1,0 +1,20 @@
+# Firmware images and extracted system files are never committed
+*.img
+*.raw
+*.bin
+*.zip
+*.rar
+*.7z
+*.apk
+*.so
+work/
+
+# heavy regenerable analysis dumps (summaries are committed)
+roms/**/coverage.json
+roms/**/native_deps.json
+roms/**/xml_config.json
+roms/**/resources.json
+roms/**/ui_knobs.json
+roms/**/ui_deep.json
+roms/**/statusbar_slots.json
+roms/**/overlays.json

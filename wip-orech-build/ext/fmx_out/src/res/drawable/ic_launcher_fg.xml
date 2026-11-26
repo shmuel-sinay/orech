@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- The app's two-tone yellow folder, scaled into the adaptive-icon safe zone, with an "X" -->
+    <group android:scaleX="2.5" android:scaleY="2.5" android:translateX="24" android:translateY="23">
+        <path android:fillColor="#FFF0A020"
+            android:pathData="M9.6,3.5H4.2c-1.2,0 -2.2,1 -2.2,2.2v12.6c0,1.2 1,2.2 2.2,2.2h15.6c1.2,0 2.2,-1 2.2,-2.2V8c0,-1.2 -1,-2.2 -2.2,-2.2h-7.8z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M4,7.6h16v3H4z" />
+        <path android:fillColor="#FFFFC531"
+            android:pathData="M2,10.2c0,-1.1 0.9,-1.9 2,-1.9h16c1.1,0 2,0.8 2,1.9v8.1c0,1.2 -1,2.2 -2.2,2.2H4.2c-1.2,0 -2.2,-1 -2.2,-2.2z" />
+        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6" android:strokeLineCap="round"
+            android:pathData="M10,12.4L14,16.4M14,12.4L10,16.4" />
+    </group>
+</vector>

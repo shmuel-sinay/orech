@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>דגם - בורר גרסאות ללקוח</title>
+<style>
+  :root { --bg:#e9e7e2; --ink:#1d1d1b; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:24px 16px 48px; background:var(--bg); color:var(--ink);
+         font-family:"Segoe UI","Heebo",Arial,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  p.sub { margin:0 0 24px; color:#55534e; font-size:14px; }
+  .row { display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; }
+  .col { width:340px; }
+  .col > h2 { font-size:15px; margin:0 0 8px; font-weight:600; }
+  .col > h2 span { font-weight:400; color:#55534e; }
+  .phone { width:340px; height:640px; background:#fff; border:1px solid #9c9a94; overflow:hidden; position:relative; display:flex; flex-direction:column; }
+  .phone + .phone { margin-top:14px; height:auto; min-height:230px; }
+  svg { width:22px; height:22px; flex:none; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* ---------- A: Material 3 tonal ---------- */
+  .a { background:#fdf8f5; font-family:"Roboto","Segoe UI",Arial,sans-serif; }
+  .a .top { padding:20px 20px 8px; }
+  .a .top small { color:#6b625c; font-size:12px; letter-spacing:.3px; }
+  .a .top h3 { margin:2px 0 0; font-size:24px; font-weight:500; color:#2b2420; }
+  .a .cur { margin:8px 16px 4px; padding:10px 14px; background:#f1e4d9; color:#4a3a2e; font-size:13px; border-right:4px solid #8c5a2b; }
+  .a .opts { padding:8px 16px; flex:1; }
+  .a .opt { display:flex; gap:12px; padding:14px 12px; border-bottom:1px solid #e3d8cf; align-items:flex-start; }
+  .a .opt.sel { background:#f6e7d6; }
+  .a .radio { width:20px; height:20px; border:2px solid #7a6a5d; border-radius:50%; margin-top:2px; flex:none; position:relative; }
+  .a .sel .radio { border-color:#8c5a2b; }
+  .a .sel .radio::after { content:""; position:absolute; inset:3px; border-radius:50%; background:#8c5a2b; }
+  .a .opt b { display:block; font-size:16px; font-weight:500; }
+  .a .opt span { display:block; font-size:13px; color:#6b625c; margin-top:2px; line-height:1.4; }
+  .a .ico { color:#8c5a2b; margin-top:1px; }
+  .a .actions { padding:12px 16px 18px; display:flex; gap:10px; }
+  .a .btn { flex:1; padding:12px; text-align:center; font-size:15px; font-weight:500; }
+  .a .btn.p { background:#8c5a2b; color:#fff; }
+  .a .btn.s { border:1px solid #8c5a2b; color:#8c5a2b; }
+
+  /* ---------- B: Flat classic / dense ---------- */
+  .b { background:#f3f3f3; font-family:"Segoe UI",Arial,sans-serif; }
+  .b .bar { background:#1f5f8b; color:#fff; padding:14px 16px; font-size:17px; }
+  .b .cur { padding:8px 16px; font-size:12.5px; background:#dfe9f0; border-bottom:1px solid #b7c8d4; }
+  .b table { width:100%; border-collapse:collapse; background:#fff; }
+  .b td { padding:12px 14px; border-bottom:1px solid #d6d6d6; vertical-align:top; font-size:14px; }
+  .b tr.sel td { background:#e8f1f8; }
+  .b td.k { width:34px; padding-left:0; padding-right:14px; }
+  .b .chk { width:18px; height:18px; border:2px solid #555; display:block; margin-top:1px; position:relative; }
+  .b .sel .chk { background:#1f5f8b; border-color:#1f5f8b; }
+  .b .sel .chk::after { content:""; position:absolute; right:4px; top:0; width:5px; height:10px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+  .b td b { display:block; font-size:15px; }
+  .b td i { font-style:normal; color:#555; font-size:12.5px; }
+  .b .fill { flex:1; }
+  .b .foot { padding:12px 16px; background:#e6e6e6; border-top:1px solid #bdbdbd; display:flex; gap:8px; }
+  .b .btn { padding:10px 18px; font-size:14px; border:1px solid #1f5f8b; color:#1f5f8b; background:#fff; }
+  .b .btn.p { background:#1f5f8b; color:#fff; flex:1; text-align:center; }
+
+  /* ---------- C: big touch, high contrast ---------- */
+  .c { background:#111; color:#fff; font-family:"Arial",sans-serif; }
+  .c .top { padding:18px 18px 10px; border-bottom:3px solid #f2b705; }
+  .c .top h3 { margin:0; font-size:26px; }
+  .c .top small { color:#f2b705; font-size:13px; }
+  .c .big { flex:1; display:flex; flex-direction:column; }
+  .c .opt { flex:1; display:flex; gap:14px; align-items:center; padding:0 18px; border-bottom:1px solid #444; }
+  .c .opt.sel { background:#f2b705; color:#111; }
+  .c .opt svg { width:34px; height:34px; stroke-width:2.2; }
+  .c .opt b { display:block; font-size:21px; }
+  .c .opt span { display:block; font-size:13px; opacity:.85; margin-top:3px; line-height:1.35; }
+  .c .go { padding:18px; background:#fff; color:#111; text-align:center; font-size:19px; font-weight:700; }
+  .c .go.dim { background:#333; color:#999; }
+
+  /* confirm dialogs (second state) */
+  .dlg { padding:18px; }
+  .dlg h4 { margin:0 0 8px; font-size:17px; }
+  .dlg p { margin:0 0 6px; font-size:13.5px; line-height:1.5; }
+  .dlg .pin { margin:10px 0; padding:10px; border:1px dashed currentColor; font-size:14px; letter-spacing:6px; text-align:center; }
+  .dlg .btns { display:flex; gap:8px; margin-top:12px; }
+  .dlg .btns div { flex:1; padding:10px; text-align:center; font-size:14px; border:1px solid currentColor; }
+  .note { max-width:740px; margin-top:28px; font-size:14px; line-height:1.6; }
+  .note li { margin-bottom:4px; }
+</style>
+</head>
+<body>
+<h1>דגם: בורר גרסאות ללקוח (מסך אחד, שלושה סגנונות)</h1>
+<p class="sub">אותו תוכן בכל סגנון: מצב נוכחי, שלוש גרסאות, כפתור החלה, ושלב אישור. הדגם סטטי ולא פעיל.</p>
+
+<!-- reusable icons are inlined per use (stroke icons, one set) -->
+<div class="row">
+
+  <!-- ===== A ===== -->
+  <div class="col">
+    <h2>א. Material 3 מרוסן <span>(קרוב לאנדרואיד של המכשיר)</span></h2>
+    <div class="phone a">
+      <div class="top"><small>אורך · מצב מוכר</small><h3>גרסה ללקוח</h3></div>
+      <div class="cur">מותקנת כעת: פתוחה</div>
+      <div class="opts">
+        <div class="opt">
+          <div class="radio"></div>
+          <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <div><b>שמור</b><span>אפליקציות בסיס בלבד. אי אפשר להתקין שום דבר.</span></div>
+        </div>
+        <div class="opt">
+          <div class="radio"></div>
+          <svg class="ico" viewBox="0 0 24 24"><path d="M4 9l1-4h14l1 4"/><path d="M5 9v10h14V9"/><path d="M9 19v-5h6v5"/></svg>
+          <div><b>שמור עם חנות פנימית</b><span>התקנה רק מתוך החנות הפנימית.</span></div>
+        </div>
+        <div class="opt sel">
+          <div class="radio"></div>
+          <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>
+          <div><b>פתוחה</b><span>אפשר להתקין גם קובצי אפליקציה מבחוץ.</span></div>
+        </div>
+      </div>
+      <div class="actions"><div class="btn s">ביטול</div><div class="btn p">החל על המכשיר</div></div>
+    </div>
+    <div class="phone a">
+      <div class="dlg">
+        <h4>לעבור ל"שמור עם חנות פנימית"?</h4>
+        <p>המכשיר יופעל מחדש. אפשר לשנות שוב בכל עת.</p>
+        <div class="pin">• • • •</div>
+        <div class="btns"><div>חזרה</div><div style="background:#8c5a2b;color:#fff;border-color:#8c5a2b">אישור</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== B ===== -->
+  <div class="col">
+    <h2>ב. שטוח קלאסי <span>(טבלה צפופה, כמו כלי מוכר)</span></h2>
+    <div class="phone b">
+      <div class="bar">בחירת גרסה ללקוח</div>
+      <div class="cur">מותקנת כעת: פתוחה &nbsp;|&nbsp; דגם: זמיר</div>
+      <table>
+        <tr>
+          <td class="k"><span class="chk"></span></td>
+          <td><b>שמור</b><i>אפליקציות בסיס בלבד, בלי התקנה</i></td>
+        </tr>
+        <tr>
+          <td class="k"><span class="chk"></span></td>
+          <td><b>שמור עם חנות פנימית</b><i>התקנה רק מהחנות הפנימית</i></td>
+        </tr>
+        <tr class="sel">
+          <td class="k"><span class="chk"></span></td>
+          <td><b>פתוחה</b><i>אפשר להתקין גם קבצי אפליקציה מבחוץ</i></td>
+        </tr>
+      </table>
+      <div class="fill"></div>
+      <div class="foot"><div class="btn p">החל</div><div class="btn">שחזור</div></div>
+    </div>
+    <div class="phone b">
+      <div class="bar">אישור שינוי</div>
+      <div class="dlg">
+        <p><b>שמור עם חנות פנימית</b> במקום <b>פתוחה</b>.</p>
+        <p>נדרש אתחול. אפשר לבטל בשחזור מגיבוי.</p>
+        <div class="btns"><div>ביטול</div><div style="background:#1f5f8b;color:#fff;border-color:#1f5f8b">המשך</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== C ===== -->
+  <div class="col">
+    <h2>ג. כפתורים גדולים בניגוד גבוה <span>(למוכר בדוכן, ביד אחת)</span></h2>
+    <div class="phone c">
+      <div class="top"><small>מצב נוכחי: פתוחה</small><h3>איזו גרסה ללקוח?</h3></div>
+      <div class="big">
+        <div class="opt">
+          <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <div><b>שמור</b><span>בסיס בלבד, בלי התקנה</span></div>
+        </div>
+        <div class="opt">
+          <svg viewBox="0 0 24 24"><path d="M4 9l1-4h14l1 4"/><path d="M5 9v10h14V9"/><path d="M9 19v-5h6v5"/></svg>
+          <div><b>שמור עם חנות פנימית</b><span>התקנה רק מהחנות הפנימית</span></div>
+        </div>
+        <div class="opt sel">
+          <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>
+          <div><b>פתוחה</b><span>גם קבצי אפליקציה מבחוץ</span></div>
+        </div>
+      </div>
+      <div class="go dim">נבחרה הגרסה הנוכחית - אין מה להחיל</div>
+    </div>
+    <div class="phone c">
+      <div class="dlg">
+        <h4>להחיל "שמור"?</h4>
+        <p>הלקוח לא יוכל להתקין כלום. המכשיר יופעל מחדש.</p>
+        <div class="pin">• • • •</div>
+        <div class="btns"><div>חזרה</div><div style="background:#f2b705;color:#111;border-color:#f2b705">החל</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<ul class="note">
+  <li>בכל הסגנונות: המצב הנוכחי של המכשיר מוצג למעלה, והחלה אפשרית רק כשנבחרה גרסה שונה מהנוכחית.</li>
+  <li>הקוד PIN בשלב האישור מגן מפני לחיצה בטעות או לקוח שמחזיק את המכשיר. אפשר להסיר.</li>
+  <li>אייקונים: שלושה סמלי קו בלבד (מנעול, חנות, מנעול פתוח), בלי אימוג'י.</li>
+</ul>
+</body>
+</html>

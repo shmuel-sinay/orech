@@ -1,0 +1,14 @@
+08:12:11 waiting for deploy.log
+08:12:26 first deploy finished; continuing
+08:12:27 OK /system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+08:12:28 OK /vendor/bin/orech_vguard.sh
+08:12:30 second deploy done=2
+08:12:30 rebooting
+08:13:33 boot completed=True
+08:13:58 check [getprop init.svc.orech_vguard] => running
+08:13:59 check [su -c 'ps -A | grep orech_vguard | head ] => 
+08:13:59 check [getprop persist.sys.usb.config] => adb
+08:13:59 check [settings get global adb_enabled] => 1
+08:13:59 check [su -c 'sha256sum /system/framework/servi] => ec6aa5347a90d98d629c24790d68f8ba0717e1a7d6b48785c3be22bedb077131 /system/framework/services.jar fcb4cb6c1459a42177f15452a40504861a3d1f8709b336f2d517e3eee7ec76e4 /system/system_ext/priv-app/MtkSettings/MtkSettings.apk cb2a2c39ca444f7694e0e27617855dd28c71e24f32318cde2341f70f58a172aa /system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk 8ef5791cdde81e31c63c77020e892c92305b4c6b0cfa917479b2bb10d5fe1c16 /system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+08:14:00 check [logcat -d | grep -c 'FATAL EXCEPTION'] => 0
+08:14:00 finished2

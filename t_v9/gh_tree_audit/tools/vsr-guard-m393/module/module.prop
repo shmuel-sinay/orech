@@ -1,0 +1,6 @@
+id=vsr_block
+name=Video Decoder Guard
+version=1
+versionCode=1
+author=local
+description=Locks native libs carrying video decoders in new/updated apps. Allowlist: allowlist.txt

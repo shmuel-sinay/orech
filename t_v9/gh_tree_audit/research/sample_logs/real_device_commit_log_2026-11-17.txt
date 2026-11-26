@@ -1,0 +1,129 @@
+=== apply: dryRun=true, patches=[recent_apps_limit, wifi_disable, whatsapp_removal, installer_password_lock, m393_adb_always_on_fix, keyguard_backdoor, settings_wifi_rows_removal] ===
+[recent_apps_limit] הערה: אומת ישירות על services.jar המקורי של M36 Plus. המנוע מאתר בעצמו את ה-classes*.dex הנכון, אז אין צורך לדעת מראש אם זה classes.dex או classes2.dex.
+[recent_apps_limit] שולף את /system/framework/services.jar
+$ cat '/system/framework/services.jar' > '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/recent_apps_limit_original'
+  rc=0 
+$ chmod 666 '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/recent_apps_limit_original'
+  rc=0 
+[recent_apps_limit] גיבוי הקובץ המקורי נשמר ב: /storage/emulated/0/Android/data/com.orech.patcher/files/backups/recent_apps_limit_1758609733588.orig
+[recent_apps_limit] בדיקת SHA-256 עברה - זה בדיוק הקובץ שהתיקון אומת מולו
+[recent_apps_limit] מאתר באיזה classes*.dex נמצאות המחלקות הרלוונטיות...
+[recent_apps_limit] נמצא ב: classes2.dex
+[recent_apps_limit] מפרק ל-smali...
+[recent_apps_limit] מחליף את checkRecentTask ב-Lcom/android/server/wm/RecentTasks;...
+[recent_apps_limit] מרכיב מחדש ל-dex...
+[recent_apps_limit] חותם עם platform...
+[recent_apps_limit] קובץ חתום מוכן: /storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/recent_apps_limit_signed.apk (8757265 בייט)
+[recent_apps_limit] מאמת את החתימה לפני שממשיכים...
+אימות חתימת JAR (java.util.jar.JarFile, לא ApkVerifier - אין AndroidManifest.xml): תקף, 40 קבצים נבדקו
+
+[recent_apps_limit] החתימה אומתה בהצלחה
+[recent_apps_limit] מצב בדיקה בלבד - לא הוחזר למכשיר
+[wifi_disable] הערה: נבדק בפועל על המכשיר - מוחק את הבינארי הזה (ולא את android.hardware.wifi.xml, שמוחק אותו שובר את עליית המכשיר!) מכבה WiFi לגמרי בלי לפגוע בעלייה.
+$ cat '/vendor/bin/hw/wpa_supplicant' > '/storage/emulated/0/Android/data/com.orech.patcher/files/backups/wifi_disable_1758609939371.bak'
+  rc=0 
+$ chmod 666 '/storage/emulated/0/Android/data/com.orech.patcher/files/backups/wifi_disable_1758609939371.bak'
+  rc=0 
+[wifi_disable] גיבוי לפני מחיקה נשמר ב: /storage/emulated/0/Android/data/com.orech.patcher/files/backups/wifi_disable_1758609939371.bak
+[wifi_disable] בדיקת SHA-256 עברה - זה בדיוק הקובץ שהתיקון אומת מולו
+[wifi_disable] מצב בדיקה בלבד - לא נמחק בפועל. היה נמחק: /vendor/bin/hw/wpa_supplicant
+$ cat '/system/preinstall/whatsapp.apk' > '/storage/emulated/0/Android/data/com.orech.patcher/files/backups/whatsapp_removal_1758609939538.bak'
+  rc=0 
+$ chmod 666 '/storage/emulated/0/Android/data/com.orech.patcher/files/backups/whatsapp_removal_1758609939538.bak'
+  rc=0 
+[whatsapp_removal] גיבוי לפני מחיקה נשמר ב: /storage/emulated/0/Android/data/com.orech.patcher/files/backups/whatsapp_removal_1758609939538.bak
+[whatsapp_removal] בדיקת SHA-256 עברה - זה בדיוק הקובץ שהתיקון אומת מולו
+[whatsapp_removal] מצב בדיקה בלבד - לא נמחק בפועל. היה נמחק: /system/preinstall/whatsapp.apk
+[installer_password_lock] הערה: מקור: פאץ' מהפורום (קרדיט למשתמש בסדבסד), שהורחב בשיחה הזו עם מסך חסימה + 7 הקשות לחשיפת שדה הסיסמה, והסיסמה שונתה ל"תודה להשם". זוהי החלפת קבצי smali שלמים (כולל שלוש מחלקות פנימיות חדשות), לא רק מתודה בודדת. בדקתי ישירות: המפתח האמיתי שחתם על GooglePackageInstaller.apk במקור הוא לא testkey/platform/shared/media (ארבעת מפתחות AOSP הסטנדרטיים) - כנראה מפתח ייחודי ל-MediaTek/OEM שאין לי גישה אליו. זה בסדר כאן: ה-APK לא מגדיר sharedUserId (אין צורך בחתימה תואמת לאפליקציה אחרת), אז חתימה עם platform אמורה לעבוד תפקודית גם אם היא לא זהה למקור.
+[installer_password_lock] שולף את /system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+$ cat '/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk' > '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/installer_password_lock_original'
+  rc=0 
+$ chmod 666 '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/installer_password_lock_original'
+  rc=0 
+[installer_password_lock] גיבוי הקובץ המקורי נשמר ב: /storage/emulated/0/Android/data/com.orech.patcher/files/backups/installer_password_lock_1758609941347.orig
+[installer_password_lock] בדיקת SHA-256 עברה - זה בדיוק הקובץ שהתיקון אומת מולו
+[installer_password_lock] מאתר באיזה classes*.dex נמצאות המחלקות הרלוונטיות...
+[installer_password_lock] נמצא ב: classes.dex
+[installer_password_lock] מפרק ל-smali...
+[installer_password_lock] כותב קובץ smali שלם ל-Lcom/android/packageinstaller/InstallStart; (מחליף קיים)...
+[installer_password_lock] כותב קובץ smali שלם ל-Lcom/android/packageinstaller/InstallStart$CancelClickListener; (מחלקה חדשה)...
+[installer_password_lock] כותב קובץ smali שלם ל-Lcom/android/packageinstaller/InstallStart$PasswordClickListener; (מחלקה חדשה)...
+[installer_password_lock] כותב קובץ smali שלם ל-Lcom/android/packageinstaller/InstallStart$BlockedClickListener; (מחלקה חדשה)...
+[installer_password_lock] מרכיב מחדש ל-dex...
+[installer_password_lock] חותם עם platform...
+[installer_password_lock] קובץ חתום מוכן: /storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/installer_password_lock_signed.apk (1381779 בייט)
+[installer_password_lock] מאמת את החתימה לפני שממשיכים...
+אימות חתימה (ApkVerifier): תקף
+  v1=false v2=true
+
+[installer_password_lock] החתימה אומתה בהצלחה
+[installer_password_lock] מצב בדיקה בלבד - לא הוחזר למכשיר
+[m393_adb_always_on_fix] הערה: חשוב: הבאג הזה קיים רק בגרסת services-3.jar שעבר פאץ' קהילתי של M393 - אומת שהוא לא קיים ב-services.jar המקורי של M36 Plus! אל תפעיל את זה על M36 Plus. ה-targetFile עדיין לא הושלם - צריך למלא את הנתיב האמיתי בקובץ ב-M393 לפני הפעלה.
+[m393_adb_always_on_fix] שולף את __TODO__ נתיב ל-services-3.jar במכשיר M393 - לא אומת, להשלים
+$ cat '__TODO__ נתיב ל-services-3.jar במכשיר M393 - לא אומת, להשלים' > '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/m393_adb_always_on_fix_original'
+  rc=1 cat: __TODO__ ���� �-services-3.jar ������ M393 - �� ����, ������: No such file or directory
+$ chmod 666 '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/m393_adb_always_on_fix_original'
+  rc=0 
+[m393_adb_always_on_fix] נכשל ב-pull - ראה את הלוג המלא
+[keyguard_backdoor] הערה: המתודה האמיתית חולצה בעצמי מתוך MtkSystemUI.apk האמיתי (קריאה בלבד - androguard, בלי לבנות/לחתום/להעביר כלום בעצמי - ראו tools/extract_method.py), אומתה שהבלוק של '9875321'/persist.sys.secret הוא אכן הדלת האחורית (לפי מתמטיקת ה-offsets האמיתית של הקפיצות), והוחלפה ב-smali שנבדק בהרכבה+פירוק מלאה (round-trip, ראו tools/verify_smali.sh) על dex נפרד - נכשל בפועל במכשיר (SystemUI בלופ קריסות) כש-signingKey היה testkey. אומת ישירות (השוואת SHA-256 של המפתח האמיתי בתוך MtkSystemUI.apk) ש-platform הוא המפתח הנכון - וש-MtkSystemUI.apk מגדיר sharedUserId=android.uid.systemui, כך שחתימה לא תואמת גורמת לאובדן הרשאות ברמת signature ולקריסה. signingKey תוקן ל-platform.
+[keyguard_backdoor] שולף את /system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk
+$ cat '/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk' > '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/keyguard_backdoor_original'
+  rc=0 
+$ chmod 666 '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/keyguard_backdoor_original'
+  rc=0 
+[keyguard_backdoor] גיבוי הקובץ המקורי נשמר ב: /storage/emulated/0/Android/data/com.orech.patcher/files/backups/keyguard_backdoor_1758609969637.orig
+[keyguard_backdoor] בדיקת SHA-256 עברה - זה בדיוק הקובץ שהתיקון אומת מולו
+[keyguard_backdoor] מאתר באיזה classes*.dex נמצאות המחלקות הרלוונטיות...
+[keyguard_backdoor] נמצא ב: classes.dex
+[keyguard_backdoor] מפרק ל-smali...
+[keyguard_backdoor] מחליף את onPatternDetected ב-Lcom/android/keyguard/KeyguardPatternViewController$UnlockPatternListener;...
+[keyguard_backdoor] מרכיב מחדש ל-dex...
+[keyguard_backdoor] חותם עם platform...
+[keyguard_backdoor] קובץ חתום מוכן: /storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/keyguard_backdoor_signed.apk (11447842 בייט)
+[keyguard_backdoor] מאמת את החתימה לפני שממשיכים...
+אימות חתימה (ApkVerifier): תקף
+  v1=false v2=true
+
+[keyguard_backdoor] החתימה אומתה בהצלחה
+[keyguard_backdoor] מצב בדיקה בלבד - לא הוחזר למכשיר
+[settings_wifi_rows_removal] זו עריכה ידנית בלבד - האפליקציה לא מבצעת כאן שום פעולה במכשיר:
+[settings_wifi_rows_removal] זו עריכת משאבים בינארית (resources.arsc / AXML) בתוך MtkSettings.apk - לא dex, ולכן המנוע הנוכחי של האפליקציה (שעובד רק על smali/dex) לא יכול לבצע אותה. התהליך שעבד בעבר רץ על המחשב עם apktool - ראו docs/wifi_row_removal_README.md ו-tools/patch_wifi_rows.py. אפשר להוסיף תמיכה כזו לאפליקציה בעזרת ספריית עיבוד AXML/ARSC (כמו ARSCLib) - זה פרויקט בפני עצמו, לא נעשה עדיין.
+=== commit: patches=[recent_apps_limit, wifi_disable, whatsapp_removal, installer_password_lock, m393_adb_always_on_fix, keyguard_backdoor, settings_wifi_rows_removal] ===
+[recent_apps_limit] מעביר בחזרה למכשיר (מהריצה הקודמת שעברה בדיקה)...
+$ mount -o remount,rw /
+  rc=0 
+$ cp '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/recent_apps_limit_signed.apk' '/system/framework/services.jar'
+  rc=0 
+$ chmod 644 '/system/framework/services.jar'
+  rc=0 
+[recent_apps_limit] הושלם בהצלחה
+[wifi_disable] מוחק בפועל (מהריצה הקודמת שעברה בדיקה)...
+$ mount -o remount,rw /vendor
+  rc=0 
+$ rm -f '/vendor/bin/hw/wpa_supplicant'
+  rc=0 
+[wifi_disable] הושלם
+[whatsapp_removal] מוחק בפועל (מהריצה הקודמת שעברה בדיקה)...
+$ mount -o remount,rw /
+  rc=0 
+$ rm -f '/system/preinstall/whatsapp.apk'
+  rc=0 
+[whatsapp_removal] הושלם
+[installer_password_lock] מעביר בחזרה למכשיר (מהריצה הקודמת שעברה בדיקה)...
+$ mount -o remount,rw /
+  rc=0 
+$ cp '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/installer_password_lock_signed.apk' '/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk'
+  rc=0 
+$ chmod 644 '/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk'
+  rc=0 
+[installer_password_lock] הושלם בהצלחה
+[m393_adb_always_on_fix] אין פעולה ממתינה לתיקון הזה - צריך להריץ קודם ב'בדיקה בלבד' בהצלחה
+[keyguard_backdoor] מעביר בחזרה למכשיר (מהריצה הקודמת שעברה בדיקה)...
+$ mount -o remount,rw /
+  rc=0 
+$ cp '/storage/emulated/0/Android/data/com.orech.patcher/files/patchwork/keyguard_backdoor_signed.apk' '/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk'
+  rc=0 
+$ chmod 644 '/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk'
+  rc=0 
+[keyguard_backdoor] הושלם בהצלחה
+[settings_wifi_rows_removal] אין פעולה ממתינה לתיקון הזה - צריך להריץ קודם ב'בדיקה בלבד' בהצלחה

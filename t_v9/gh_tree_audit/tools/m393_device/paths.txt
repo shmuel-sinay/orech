@@ -1,0 +1,16 @@
+/system/framework/services.jar
+/system/system_ext/priv-app/MtkSettings/MtkSettings.apk
+/system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk
+/system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+/system/build.prop
+/vendor/bin/orech_vguard.sh
+/vendor/etc/init/orech_vguard.rc
+/vendor/etc/init/orech_integrity.rc
+/vendor/etc/media_codecs_c2.xml
+/vendor/etc/media_codecs_google_video_le.xml
+/vendor/etc/media_codecs_mediatek_video.xml
+/vendor/etc/media_codecs_performance.xml
+/product/app/OrechMockLoc/OrechMockLoc.apk
+/dev/block/by-name/boot_a
+/dev/block/by-name/init_boot_a
+/dev/block/by-name/vendor_boot_a

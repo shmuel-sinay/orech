@@ -1,0 +1,343 @@
+# אפליקציות בטוחות למחיקה (לא גורמות ל-bootloop), לפי תיקייה
+
+אזהרה: "בטוח" = לא קורס בעלייה. לא אומר "בלי שום אובדן פונקציה" (לדוגמה
+GMS/מצלמה/בלוטוס" בטוחים" לעלייה אבל מחיקתם מאבדת פונקציה אמיתית).
+
+## קבצים רגילים — מחיקה ישירה ב-MT Manager (129 תיקיות)
+
+product:/app/CalendarGoogle
+    CalendarGoogle.apk   (com.google.android.calendar)
+product:/app/Chrome
+    Chrome.apk   (com.android.chrome)
+product:/app/GoogleLocationHistory
+    GoogleLocationHistory.apk   (com.google.android.gms.location.history)
+product:/app/MtkWallpaperPicker
+    MtkWallpaperPicker.apk   (com.android.wallpaperpicker)
+product:/app/SpeechServicesByGoogle
+    SpeechServicesByGoogle.apk   (com.google.android.tts)
+product:/app/TrichromeLibrary
+    TrichromeLibrary.apk   (com.google.android.trichromelibrary)
+product:/app/WebViewGoogle
+    WebViewGoogle.apk   (com.google.android.webview)
+product:/app/com.google.android.modulemetadata
+    com.google.android.modulemetadata.apk   (com.google.android.modulemetadata)
+product:/app/com.google.mainline.adservices
+    com.google.mainline.adservices.apk   (com.google.mainline.adservices)
+product:/app/com.google.mainline.telemetry
+    com.google.mainline.telemetry.apk   (com.google.mainline.telemetry)
+product:/overlay
+    CaptivePortalLoginFrameworkOverlay.apk   (com.google.android.overlay.modules.captiveportallogin.forframework)
+    GmsConfigOverlayASI.apk   (com.google.android.overlay.gmsconfig.asi)
+    GmsConfigOverlayCommon.apk   (com.google.android.overlay.gmsconfig.common)
+    GmsConfigOverlayGSA.apk   (com.google.android.overlay.gmsconfig.gsa)
+    GmsConfigOverlayGeotz.apk   (com.google.android.overlay.gmsconfig.geotz)
+    GoogleDocumentsUIOverlay.apk   (com.google.android.overlay.modules.documentsui)
+    GooglePermissionControllerFrameworkOverlay.apk   (com.google.android.overlay.modules.permissioncontroller.forframework)
+    GooglePermissionControllerOverlay.apk   (com.google.android.overlay.modules.permissioncontroller)
+    ModuleMetadataGoogleOverlay.apk   (com.google.android.overlay.modules.modulemetadata.forframework)
+    framework-res__auto_generated_rro_product.apk   (android.auto_generated_rro_product__)
+product:/overlay/DisplayCutoutEmulationCorner
+    DisplayCutoutEmulationCornerOverlay.apk   (com.android.internal.display.cutout.emulation.corner)
+product:/overlay/DisplayCutoutEmulationDouble
+    DisplayCutoutEmulationDoubleOverlay.apk   (com.android.internal.display.cutout.emulation.double)
+product:/overlay/DisplayCutoutEmulationHole
+    DisplayCutoutEmulationHoleOverlay.apk   (com.android.internal.display.cutout.emulation.hole)
+product:/overlay/DisplayCutoutEmulationTall
+    DisplayCutoutEmulationTallOverlay.apk   (com.android.internal.display.cutout.emulation.tall)
+product:/overlay/DisplayCutoutEmulationWaterfall
+    DisplayCutoutEmulationWaterfallOverlay.apk   (com.android.internal.display.cutout.emulation.waterfall)
+product:/overlay/FontNotoSerifSource
+    FontNotoSerifSourceOverlay.apk   (com.android.theme.font.notoserifsource)
+product:/overlay/NavigationBarMode3Button
+    NavigationBarMode3ButtonOverlay.apk   (com.android.internal.systemui.navbar.threebutton)
+product:/overlay/NavigationBarModeGestural
+    NavigationBarModeGesturalOverlay.apk   (com.android.internal.systemui.navbar.gestural)
+product:/overlay/NavigationBarModeGesturalExtraWideBack
+    NavigationBarModeGesturalOverlayExtraWideBack.apk   (com.android.internal.systemui.navbar.gestural_extra_wide_back)
+product:/overlay/NavigationBarModeGesturalNarrowBack
+    NavigationBarModeGesturalOverlayNarrowBack.apk   (com.android.internal.systemui.navbar.gestural_narrow_back)
+product:/overlay/NavigationBarModeGesturalWideBack
+    NavigationBarModeGesturalOverlayWideBack.apk   (com.android.internal.systemui.navbar.gestural_wide_back)
+product:/overlay/WifiSystemResMainlineOverlay
+    WifiSystemResMainlineOverlay.apk   (com.android.wifi.system.mainline.resources.overlay)
+product:/overlay/WifiSystemResOverlay
+    WifiSystemResOverlay.apk   (com.android.wifi.system.resources.overlay)
+product:/priv-app/ConfigUpdater
+    ConfigUpdater.apk   (com.google.android.configupdater)
+product:/priv-app/FamilyLinkParentalControls
+    FamilyLinkParentalControls.apk   (com.google.android.gms.supervision)
+product:/priv-app/FilesGoogle
+    FilesGoogle.apk   (com.google.android.apps.nbu.files)
+product:/priv-app/GmsCore
+    GmsCore.apk   (com.google.android.gms)
+product:/priv-app/GmsCore/m/independent
+    AndroidPlatformServices.apk   (com.google.android.gms.policy_sidecar_aps)
+product:/priv-app/GoogleOneTimeInitializer
+    GoogleOneTimeInitializer.apk   (com.google.android.onetimeinitializer)
+product:/priv-app/GooglePartnerSetup
+    GooglePartnerSetup.apk   (com.google.android.partnersetup)
+product:/priv-app/ImsServiceEntitlement
+    ImsServiceEntitlement.apk   (com.android.imsserviceentitlement)
+product:/priv-app/SettingsIntelligence
+    SettingsIntelligence.apk   (com.android.settings.intelligence)
+system:/system/app/BasicDreams
+    BasicDreams.apk   (com.android.dreams.basic)
+system:/system/app/BatteryWarning
+    BatteryWarning.apk   (com.mediatek.batterywarning)
+system:/system/app/BluetoothMidiService
+    BluetoothMidiService.apk   (com.android.bluetoothmidiservice)
+system:/system/app/BookmarkProvider
+    BookmarkProvider.apk   (com.android.bookmarkprovider)
+system:/system/app/Bs_Gboard
+    Bs_Gboard.apk   (com.google.android.inputmethod.latin)
+system:/system/app/CameraExtensionsProxy
+    CameraExtensionsProxy.apk   (com.android.cameraextensions)
+system:/system/app/CaptivePortalLoginGoogle
+    CaptivePortalLoginGoogle-hdpi.apk   (com.google.android.captiveportallogin)
+    CaptivePortalLoginGoogle-ldpi.apk   (com.google.android.captiveportallogin)
+    CaptivePortalLoginGoogle-mdpi.apk   (com.google.android.captiveportallogin)
+    CaptivePortalLoginGoogle-tvdpi.apk   (com.google.android.captiveportallogin)
+    CaptivePortalLoginGoogle-xhdpi.apk   (com.google.android.captiveportallogin)
+    CaptivePortalLoginGoogle-xxhdpi.apk   (com.google.android.captiveportallogin)
+    CaptivePortalLoginGoogle-xxxhdpi.apk   (com.google.android.captiveportallogin)
+    CaptivePortalLoginGoogle.apk   (com.google.android.captiveportallogin)
+system:/system/app/CarrierDefaultApp
+    CarrierDefaultApp.apk   (com.android.carrierdefaultapp)
+system:/system/app/CertInstaller
+    CertInstaller.apk   (com.android.certinstaller)
+system:/system/app/CompanionDeviceManager
+    CompanionDeviceManager.apk   (com.android.companiondevicemanager)
+system:/system/app/EasterEgg
+    EasterEgg.apk   (com.android.egg)
+system:/system/app/ExactCalculator
+    ExactCalculator.apk   (com.android.calculator2)
+system:/system/app/GooglePrintRecommendationService
+    GooglePrintRecommendationService.apk   (com.google.android.printservice.recommendation)
+system:/system/app/HTMLViewer
+    HTMLViewer.apk   (com.android.htmlviewer)
+system:/system/app/KeyChain
+    KeyChain.apk   (com.android.keychain)
+system:/system/app/LocationEM2
+    LocationEM2.apk   (com.mediatek.lbs.em2.ui)
+system:/system/app/MiraVision
+    MiraVision.apk   (com.mediatek.miravision.ui)
+system:/system/app/Music
+    Music.apk   (com.android.music)
+system:/system/app/NfcNci
+    NfcNci.apk   (com.android.nfc)
+system:/system/app/NonFrameworkLbs
+    NonFrameworkLbs.apk   (com.mediatek.gnss.nonframeworklbs)
+system:/system/app/OTA_update
+    OTA_update.apk   (com.system.ota)
+system:/system/app/PacProcessor
+    PacProcessor.apk   (com.android.pacprocessor)
+system:/system/app/PartnerBookmarksProvider
+    PartnerBookmarksProvider.apk   (com.android.providers.partnerbookmarks)
+system:/system/app/PrintSpooler
+    PrintSpooler.apk   (com.android.printspooler)
+system:/system/app/SoundRecorder
+    SoundRecorder.apk   (com.android.soundrecorder)
+system:/system/app/Traceur
+    Traceur.apk   (com.android.traceur)
+system:/system/app/WallpaperBackup
+    WallpaperBackup.apk   (com.android.wallpaperbackup)
+system:/system/app/mediatek-res
+    mediatek-res.apk   (com.mediatek)
+system:/system/preinstall
+    AmazonMusic.apk   (com.amazon.mp3)
+    AudibleAudio.apk   (com.audible.application)
+    Omnia.apk   (com.rhmsoft.omnia)
+    SpotifyMusic.apk   (com.spotify.music)
+    applemusic.apk   (com.apple.android.music)
+    deezer.apk   (deezer.android.app)
+    kindle.apk   (com.amazon.kindle)
+    snapseed.apk   (com.niksoftware.snapseed)
+    vlc.apk   (org.videolan.vlc)
+    whatsapp.apk   (com.whatsapp)
+system:/system/priv-app/BackupRestoreConfirmation
+    BackupRestoreConfirmation.apk   (com.android.backupconfirm)
+system:/system/priv-app/BlockedNumberProvider
+    BlockedNumberProvider.apk   (com.android.providers.blockednumber)
+system:/system/priv-app/BuiltInPrintService
+    BuiltInPrintService.apk   (com.android.bips)
+system:/system/priv-app/CallLogBackup
+    CallLogBackup.apk   (com.android.calllogbackup)
+system:/system/priv-app/CellBroadcastLegacyApp
+    CellBroadcastLegacyApp.apk   (com.android.cellbroadcastreceiver)
+system:/system/priv-app/ContactsProvider
+    ContactsProvider.apk   (com.android.providers.contacts)
+system:/system/priv-app/DocumentsUIGoogle
+    DocumentsUIGoogle-hdpi.apk   (com.google.android.documentsui)
+    DocumentsUIGoogle-ldpi.apk   (com.google.android.documentsui)
+    DocumentsUIGoogle-mdpi.apk   (com.google.android.documentsui)
+    DocumentsUIGoogle-tvdpi.apk   (com.google.android.documentsui)
+    DocumentsUIGoogle-xhdpi.apk   (com.google.android.documentsui)
+    DocumentsUIGoogle-xxhdpi.apk   (com.google.android.documentsui)
+    DocumentsUIGoogle-xxxhdpi.apk   (com.google.android.documentsui)
+    DocumentsUIGoogle.apk   (com.google.android.documentsui)
+system:/system/priv-app/DownloadProvider
+    DownloadProvider.apk   (com.android.providers.downloads)
+system:/system/priv-app/DownloadProviderUi
+    DownloadProviderUi.apk   (com.android.providers.downloads.ui)
+system:/system/priv-app/DynamicSystemInstallationService
+    DynamicSystemInstallationService.apk   (com.android.dynsystem)
+system:/system/priv-app/EngineerMode
+    EngineerMode.apk   (com.mediatek.engineermode)
+system:/system/priv-app/ExternalStorageProvider
+    ExternalStorageProvider.apk   (com.android.externalstorage)
+system:/system/priv-app/FusedLocation
+    FusedLocation.apk   (com.android.location.fused)
+system:/system/priv-app/GeofenceService
+    GeofenceService.apk   (com.mediatek.location.mtkgeofence)
+system:/system/priv-app/ImsService
+    ImsService.apk   (com.mediatek.ims)
+system:/system/priv-app/InputDevices
+    InputDevices.apk   (com.android.inputdevices)
+system:/system/priv-app/LPPeService
+    LPPeService.apk   (com.mediatek.location.lppe.main)
+system:/system/priv-app/LiveWallpapersPicker
+    LiveWallpapersPicker.apk   (com.android.wallpaper.livepicker)
+system:/system/priv-app/LocalTransport
+    LocalTransport.apk   (com.android.localtransport)
+system:/system/priv-app/MediaProviderLegacy
+    MediaProviderLegacy.apk   (com.android.providers.media)
+system:/system/priv-app/MmsService
+    MmsService.apk   (com.android.mms.service)
+system:/system/priv-app/MtkCalendarProvider
+    MtkCalendarProvider.apk   (com.android.providers.calendar)
+system:/system/priv-app/MtkCapCtrl
+    MtkCapCtrl.apk   (com.mediatek.capctrl.service)
+system:/system/priv-app/MtkDeskClock
+    MtkDeskClock.apk   (com.android.deskclock)
+system:/system/priv-app/MtkGbaService
+    MtkGbaService.apk   (com.mediatek.gbaservice)
+system:/system/priv-app/MtpService
+    MtpService.apk   (com.android.mtp)
+system:/system/priv-app/MusicFX
+    MusicFX.apk   (com.android.musicfx)
+system:/system/priv-app/NetworkStackGoogle
+    NetworkStackGoogle-arm64_v8a.apk   (com.google.android.networkstack)
+    NetworkStackGoogle-hdpi.apk   (com.google.android.networkstack)
+    NetworkStackGoogle-ldpi.apk   (com.google.android.networkstack)
+    NetworkStackGoogle-mdpi.apk   (com.google.android.networkstack)
+    NetworkStackGoogle-tvdpi.apk   (com.google.android.networkstack)
+    NetworkStackGoogle-xhdpi.apk   (com.google.android.networkstack)
+    NetworkStackGoogle-xxhdpi.apk   (com.google.android.networkstack)
+    NetworkStackGoogle-xxxhdpi.apk   (com.google.android.networkstack)
+    NetworkStackGoogle.apk   (com.google.android.networkstack)
+system:/system/priv-app/ONS
+    ONS.apk   (com.android.ons)
+system:/system/priv-app/ProxyHandler
+    ProxyHandler.apk   (com.android.proxyhandler)
+system:/system/priv-app/SharedStorageBackup
+    SharedStorageBackup.apk   (com.android.sharedstoragebackup)
+system:/system/priv-app/Shell
+    Shell.apk   (com.android.shell)
+system:/system/priv-app/SmartRatSwitch
+    SmartRatSwitch.apk   (com.mediatek.smartratswitch.service)
+system:/system/priv-app/SoundPicker
+    SoundPicker.apk   (com.android.soundpicker)
+system:/system/priv-app/UserDictionaryProvider
+    UserDictionaryProvider.apk   (com.android.providers.userdictionary)
+system:/system/priv-app/ValidationTools
+    ValidationTools.apk   (com.teksun.factorytest)
+system:/system/priv-app/VpnDialogs
+    VpnDialogs.apk   (com.android.vpndialogs)
+system:/system/system_ext/app/Camera
+    Camera.apk   (com.mediatek.camera)
+system:/system/system_ext/app/MtkGallery2/galleryfeature/Gallery2Drm
+    Gallery2Drm.apk   (com.mediatek.galleryfeature.drm)
+system:/system/system_ext/app/MtkGallery2/galleryfeature/Gallery2Gif
+    Gallery2Gif.apk   (com.mediatek.gallerygif)
+system:/system/system_ext/app/MtkGallery2/galleryfeature/Gallery2Pq
+    Gallery2Pq.apk   (com.mediatek.galleryfeature.picturequality)
+system:/system/system_ext/app/MtkGallery2/galleryfeature/Gallery2PqTool
+    Gallery2PqTool.apk   (com.mediatek.galleryfeature.pq)
+system:/system/system_ext/app/MtkGallery2/galleryfeature/Gallery2Root
+    Gallery2Root.apk   (com.mediatek.galleryroots)
+system:/system/system_ext/app/TeeService
+    TeeService.apk   (com.trustonic.teeservice)
+system:/system/system_ext/priv-app/DuraSpeed
+    DuraSpeed.apk   (com.mediatek.duraspeed)
+system:/system/system_ext/priv-app/FMRadio
+    FMRadio.apk   (com.android.fmradio)
+system:/system/system_ext/priv-app/GoogleFeedback
+    GoogleFeedback.apk   (com.google.android.feedback)
+system:/system/system_ext/priv-app/GoogleServicesFramework
+    GoogleServicesFramework.apk   (com.google.android.gsf)
+system:/system/system_ext/priv-app/MtkCarrierConfig
+    MtkCarrierConfig.apk   (com.android.carrierconfig)
+system:/system/system_ext/priv-app/MtkEmergencyInfo
+    MtkEmergencyInfo.apk   (com.android.emergency)
+system:/system/system_ext/priv-app/MtkGallery2
+    MtkGallery2.apk   (com.android.gallery3d)
+system:/system/system_ext/priv-app/RemoteProvisioner
+    RemoteProvisioner.apk   (com.android.remoteprovisioner)
+system:/system/system_ext/priv-app/WallpaperCropper
+    WallpaperCropper.apk   (com.android.wallpapercropper)
+vendor:/app/GoogleNetworkStackResOverlay
+    GoogleNetworkStackResOverlay.apk   (com.google.android.networkstack.overlay)
+vendor:/app/GoogleTetheringResOverlay
+    GoogleTetheringResOverlay.apk   (com.google.android.networkstack.tethering.overlay)
+vendor:/app/InProcessTetheringResOverlay
+    InProcessTetheringResOverlay.apk   (com.android.networkstack.tethering.inprocess.overlay)
+vendor:/app/NetworkStackInProcessResOverlay
+    NetworkStackInProcessResOverlay.apk   (com.android.networkstack.inprocess.overlay)
+vendor:/app/NetworkStackResOverlay
+    NetworkStackResOverlay.apk   (com.android.networkstack.overlay)
+vendor:/app/TetheringResOverlay
+    TetheringResOverlay.apk   (com.android.networkstack.tethering.overlay)
+vendor:/overlay/CellbroadcastUIResOverlay
+    CellbroadcastUIResOverlay.apk   (com.mediatek.cellbroadcastuiresoverlay)
+vendor:/overlay/FrameworkResOverlay
+    FrameworkResOverlay.apk   (com.mediatek.frameworkresoverlay)
+vendor:/overlay/FrameworkResOverlayExt
+    FrameworkResOverlayExt.apk   (com.mediatek.FrameworkResOverlayExt)
+vendor:/overlay/MtkSettingsResOverlay
+    MtkSettingsResOverlay.apk   (com.mediatek.MtkSettingsResOverlay)
+vendor:/overlay/SettingsProviderResOverlay
+    SettingsProviderResOverlay.apk   (com.mediatek.SettingsProviderResOverlay)
+vendor:/overlay/SystemUIResOverlay
+    SystemUIResOverlay.apk   (com.mediatek.systemuiresoverlay)
+vendor:/overlay/WifiResMainlineOverlay
+    WifiResMainlineOverlay.apk   (com.android.wifi.mainline.resources.overlay)
+vendor:/overlay/WifiResOverlay
+    WifiResOverlay.apk   (com.android.wifi.resources.overlay)
+
+## בתוך APEX — לא מחיקה פשוטה! דורש פתיחה-עריכה-סגירה מחדש של ה-APEX
+## (ראו tools/apex_unpack.py באטלס) — לא ל-MT Manager רגיל.
+
+apex:/com.android.apex.cts.shim/app/CtsShim@1
+    CtsShim.apk   (com.android.cts.ctsshim)
+apex:/com.android.apex.cts.shim/priv-app/CtsShimPriv@1
+    CtsShimPriv.apk   (com.android.cts.priv.ctsshim)
+apex:/com.android.btservices/app/Bluetooth@TP1A.220624.014
+    Bluetooth.apk   (com.android.bluetooth)
+apex:/com.google.android.adservices/app/SdkSandboxGoogle@331418080
+    SdkSandboxGoogle.apk   (com.google.android.sdksandbox)
+apex:/com.google.android.adservices/priv-app/AdServicesApkGoogle@331418080
+    AdServicesApkGoogle.apk   (com.google.android.adservices.api)
+apex:/com.google.android.cellbroadcast/priv-app/GoogleCellBroadcastApp@331411000
+    GoogleCellBroadcastApp.apk   (com.google.android.cellbroadcastreceiver)
+apex:/com.google.android.cellbroadcast/priv-app/GoogleCellBroadcastServiceModule@331411000
+    GoogleCellBroadcastServiceModule.apk   (com.google.android.cellbroadcastservice)
+apex:/com.google.android.mediaprovider/priv-app/MediaProviderGoogle@331412040
+    MediaProviderGoogle.apk   (com.google.android.providers.media.module)
+apex:/com.google.android.ondevicepersonalization/app/OnDevicePersonalizationGoogle@330442000
+    OnDevicePersonalizationGoogle.apk   (com.google.android.ondevicepersonalization.services)
+apex:/com.google.android.permission/priv-app/GoogleSafetyCenterResources@331411000
+    GoogleSafetyCenterResources.apk   (com.google.android.safetycenter.resources)
+apex:/com.google.android.tethering/app/HalfSheetUXGoogle@331412030
+    HalfSheetUXGoogle.apk   (com.google.android.nearby.halfsheet)
+apex:/com.google.android.tethering/priv-app/ServiceConnectivityResourcesGoogle@331412030
+    ServiceConnectivityResourcesGoogle.apk   (com.google.android.connectivity.resources)
+apex:/com.google.android.tethering/priv-app/TetheringGoogle@331412030
+    TetheringGoogle.apk   (com.google.android.networkstack.tethering)
+apex:/com.google.android.uwb/priv-app/ServiceUwbResources@331410010
+    ServiceUwbResources.apk   (com.android.uwb.resources)
+apex:/com.google.android.wifi/app/OsuLoginGoogle@331414000
+    OsuLoginGoogle.apk   (com.google.android.hotspot2.osulogin)
+apex:/com.google.android.wifi/app/WifiDialogGoogle@331414000
+    WifiDialogGoogle.apk   (com.google.android.wifi.dialog)
+apex:/com.google.android.wifi/priv-app/ServiceWifiResourcesGoogle@331414000
+    ServiceWifiResourcesGoogle.apk   (com.google.android.wifi.resources)

@@ -1,0 +1,9 @@
+09:00:36 start
+09:00:38 written services_final2.jar; rebooting
+09:01:41 boot completed=True
+09:02:01 check [su -c 'sha256sum /system/framework/servi] => 7e0a9ac643579dd81f588766fb1a9bee150458257eff79d63a5f36bd9598b3d7 /system/framework/services.jar
+09:02:02 check [getprop init.svc.orech_vguard] => running
+09:02:02 check [settings get global adb_enabled] => 1
+09:02:02 check [logcat -d | grep -c 'FATAL EXCEPTION'] => 0
+09:02:02 check [dumpsys package com.android.settings | g] => versionName=13 C:\Users\user1\AppData\Local\Android\Sdk\platform-tools\adb.exe : Failed to write while dumping service package: Broken pipe + CategoryInfo : NotSpecified: (Failed to write...ge: Broken pipe:String) [], RemoteException + FullyQualifiedErrorId : NativeCommandError
+09:02:02 finished3-ok

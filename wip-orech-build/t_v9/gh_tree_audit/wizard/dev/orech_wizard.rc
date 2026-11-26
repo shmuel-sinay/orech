@@ -1,0 +1,29 @@
+service orech_wizard_boot /system/bin/sh /vendor/bin/orech_wizard.sh boot
+    user root
+    group root
+    seclabel u:r:magisk:s0
+    oneshot
+    disabled
+
+service orech_wizard_pick /system/bin/sh /vendor/bin/orech_wizard.sh pick
+    user root
+    group root
+    seclabel u:r:magisk:s0
+    oneshot
+    disabled
+
+service orech_wizard_finish /system/bin/sh /vendor/bin/orech_wizard.sh finish
+    user root
+    group root
+    seclabel u:r:magisk:s0
+    oneshot
+    disabled
+
+on post-fs-data
+    exec_start orech_wizard_boot
+
+on property:sys.orech.req=*
+    start orech_wizard_pick
+
+on property:sys.orech.finish=1
+    start orech_wizard_finish

@@ -1,0 +1,24 @@
+[
+  {
+    "id": "locked",
+    "title": "שמור",
+    "desc": "אפליקציות בסיס בלבד. אי אפשר להתקין שום דבר.",
+    "icon": "lock",
+    "patches": ["installer_password_lock"]
+  },
+  {
+    "id": "store",
+    "title": "שמור עם חנות פנימית",
+    "desc": "התקנה רק מתוך החנות הפנימית.",
+    "icon": "store",
+    "patches": ["installer_password_lock"],
+    "storeInstall": "pending"
+  },
+  {
+    "id": "open",
+    "title": "פתוחה",
+    "desc": "אפשר להתקין גם קובצי אפליקציה מבחוץ.",
+    "icon": "unlock",
+    "patches": []
+  }
+]

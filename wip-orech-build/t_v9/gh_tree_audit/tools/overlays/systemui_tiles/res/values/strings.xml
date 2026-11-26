@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="quick_settings_tiles_stock" translatable="false">bt,flashlight,dnd,alarm,airplane,controls,wallet,rotation,battery,screenrecord,mictoggle,cameratoggle,inversion,dark,work,night,reverse,reduce_brightness,qr_code_scanner,onehanded,color_correction</string>
+    <string name="quick_settings_tiles_default" translatable="false">bt,dnd,alarm,rotation,battery,wallet,screenrecord,color_correction,night,inversion,dark,reduce_brightness</string>
+</resources>

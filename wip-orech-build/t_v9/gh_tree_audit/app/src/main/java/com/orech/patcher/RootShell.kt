@@ -1,0 +1,116 @@
+package com.orech.patcher
+
+import java.io.DataOutputStream
+import java.io.File
+
+/** עטיפה מינימלית סביב פקודת su - בלי ספריית root חיצונית. */
+object RootShell {
+
+    /** מריץ כל פקודה בנפרד ומחזיר לכל אחת (קוד יציאה, פלט) - כדי שיהיה אפשר לאתר בדיוק איפה זה נשבר. */
+    fun exec(vararg commands: String): List<Triple<String, Int, String>> {
+        val process = ProcessBuilder("su").redirectErrorStream(true).start()
+        val out = DataOutputStream(process.outputStream)
+        val marker = "__ORECH_RC__"
+        for (cmd in commands) {
+            out.writeBytes(cmd + "\n")
+            out.writeBytes("echo $marker:$?\n")
+        }
+        out.writeBytes("exit\n")
+        out.flush()
+        val rawOutput = process.inputStream.bufferedReader().readText()
+        process.waitFor()
+
+        val results = mutableListOf<Triple<String, Int, String>>()
+        var remaining = rawOutput
+        for (cmd in commands) {
+            val idx = remaining.indexOf("$marker:")
+            if (idx == -1) {
+                results.add(Triple(cmd, -1, remaining.trim()))
+                remaining = ""
+                continue
+            }
+            val chunk = remaining.substring(0, idx)
+            val afterMarker = remaining.substring(idx + marker.length + 1)
+            val lineEnd = afterMarker.indexOf('\n').let { if (it == -1) afterMarker.length else it }
+            val rc = afterMarker.substring(0, lineEnd).trim().toIntOrNull() ?: -1
+            remaining = if (lineEnd < afterMarker.length) afterMarker.substring(lineEnd + 1) else ""
+            results.add(Triple(cmd, rc, chunk.trim()))
+        }
+        return results
+    }
+
+    /**
+     * מחזיר (הצלחה, לוג מפורט). בכוונה בלי "2>&1" על ה-cat: אם cat נכשל לקרוא
+     * את המקור, שגיאת ה-stderr שלו צריכה להגיע ללוג שלנו - לא להיכתב בטעות
+     * *בתוך* קובץ היעד (מה שהיה יוצר קובץ קטן "תקין למראה" שבפועל הוא טקסט
+     * שגיאה, לא התוכן האמיתי). ההצלחה נקבעת גם לפי קוד היציאה וגם לפי שהקובץ
+     * נוצר ולא ריק.
+     */
+    fun pull(remotePath: String, localPath: String): Pair<Boolean, String> {
+        val results = exec("cat '$remotePath' > '$localPath'", "chmod 666 '$localPath'")
+        val catOk = results.first().second == 0
+        val fileOk = File(localPath).let { it.exists() && it.length() > 0 }
+        val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" }
+        return (catOk && fileOk) to log
+    }
+
+    /**
+     * כתיבה במקום עם dd conv=notrunc ואז truncate, ואימות sha256 מול הקובץ המקומי.
+     * לא משתמשים ב-cp: הוא מקצץ את היעד לפני הכתיבה, ובמחיצת מערכת מלאה (למשל M393)
+     * הבלוקים שהתפנו לא חוזרים - והקובץ נשאר קטוע ופגום.
+     */
+    fun push(localPath: String, remotePath: String, remount: String): Pair<Boolean, String> {
+        val local = File(localPath)
+        val size = local.length()
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        local.inputStream().use { input ->
+            val buf = ByteArray(64 * 1024)
+            while (true) {
+                val n = input.read(buf)
+                if (n <= 0) break
+                digest.update(buf, 0, n)
+            }
+        }
+        val hash = digest.digest().joinToString("") { "%02x".format(it) }
+        val results = exec(
+            "mount -o remount,rw $remount",
+            "dd if='$localPath' of='$remotePath' bs=1048576 conv=notrunc",
+            "truncate -s $size '$remotePath'",
+            "chmod 644 '$remotePath'",
+            "sync",
+            "sha256sum '$remotePath'"
+        )
+        val hashOk = results.last().third.trim().startsWith(hash)
+        val ok = results.all { it.second == 0 } && hashOk
+        val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" } +
+            "\n" + (if (hashOk) "אימות sha256: תקין" else "אימות sha256: לא תואם (צפוי $hash)")
+        return ok to log
+    }
+
+    fun deleteFile(remotePath: String, remount: String): Pair<Boolean, String> {
+        val results = exec(
+            "mount -o remount,rw $remount",
+            "rm -f '$remotePath'"
+        )
+        val ok = results.all { it.second == 0 }
+        val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" }
+        return ok to log
+    }
+
+    fun exists(remotePath: String): Boolean {
+        val results = exec("[ -e '$remotePath' ]")
+        return results.lastOrNull()?.second == 0
+    }
+
+    fun putSetting(namespace: String, key: String, value: String): Pair<Boolean, String> {
+        val results = exec(
+            "settings put $namespace $key $value",
+            "settings get $namespace $key"
+        )
+        val actual = results.last().third.trim()
+        val ok = actual == value
+        val log = results.joinToString("\n") { "\$ ${it.first}\n  rc=${it.second} ${it.third}" } +
+            "\nנדרש reboot מלא כדי שהערך ישפיע בפועל."
+        return ok to log
+    }
+}

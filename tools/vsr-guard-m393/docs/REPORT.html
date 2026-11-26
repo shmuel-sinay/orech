@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>דוח מלא: מה נוצר ושונה במכשיר M393</title>
+<style>
+  body { font-family: Arial, "Segoe UI", sans-serif; max-width: 920px; margin: 24px auto; padding: 0 16px; line-height: 1.6; color: #1d1d1d; background: #fafaf7; }
+  h1 { font-size: 24px; border-bottom: 2px solid #1d1d1d; padding-bottom: 6px; }
+  h2 { font-size: 18px; margin-top: 32px; border-bottom: 1px solid #bbb; padding-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px; }
+  th, td { border: 1px solid #c8c8c0; padding: 6px 8px; text-align: right; vertical-align: top; }
+  th { background: #ececE4; }
+  code { direction: ltr; unicode-bidi: embed; background: #eee; padding: 0 4px; font-size: 13px; }
+  .note { background: #fff6dd; border-right: 4px solid #c9a227; padding: 8px 12px; margin: 12px 0; }
+  .bad { background: #fde8e8; border-right: 4px solid #b33; padding: 8px 12px; margin: 12px 0; }
+  .ok { background: #e7f4e7; border-right: 4px solid #3a7d3a; padding: 8px 12px; margin: 12px 0; }
+  pre { direction: ltr; text-align: left; background: #f0f0ea; padding: 10px; overflow-x: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>דוח מפורט: כל מה שנוצר ושונה בשיחה הזו</h1>
+<p>מכשיר: <b>M393</b> (אנדרואיד 13, Magisk 26.0, root). כל הפעולות בוצעו דרך ADB מהמחשב.<br>
+הדוח מפריד בין מה שנעשה <b>לפני</b> השיחה (לא על ידי) לבין מה שאני יצרתי או שיניתי.</p>
+
+<h2>1. מה היה קיים לפני (לא אני עשיתי)</h2>
+<table>
+<tr><th>פריט</th><th>מצב שאימתתי</th></tr>
+<tr><td>ארבעה קבצי codecs ב-<code>/vendor/etc</code> (הסרת מפענחי וידאו) + השבתת מפענחי תוכנה</td><td>ב-<code>media_codecs_c2.xml</code> נמצאו 12 רשומות <code>enabled="false"</code>. את שאר הקבצים לא פתחתי ולא בדקתי hash.</td></tr>
+<tr><td>הסרת MtkGallery2, Music, MusicFX, עדכון gallery3d, השבתת PreviewActivity</td><td>לא בדקתי מחדש. מבוסס על הדיווח שהודבק.</td></tr>
+<tr><td>גיבוי בתיקיית <code>zamir\m393\vendor_codecs\orig</code> במחשב</td><td>קיימת התיקייה <code>zamir\m393</code> בתיקיית הפרויקטים. תוכן הגיבוי לא נבדק.</td></tr>
+</table>
+
+<h2>2. מה יצרתי במכשיר</h2>
+<h3>2.1 מודול Magisk: <code>/data/adb/modules/vsr_block/</code></h3>
+<table>
+<tr><th>קובץ</th><th>הרשאות</th><th>מה זה</th></tr>
+<tr><td><code>module.prop</code></td><td>644 root</td><td>הגדרת מודול: מזהה <code>vsr_block</code>, שם "Video Decoder Guard", גרסה 1.</td></tr>
+<tr><td><code>service.sh</code></td><td>755 root</td><td>השירות. רץ אחרי עליית המערכת (מחכה ל-<code>sys.boot_completed</code>). כל 10 שניות מחפש תיקיות חבילה חדשות ב-<code>/data/app</code> (לפי קובץ <code>.stamp</code>). בכל חבילה שאינה ברשימת החריגים הוא בודק קבצי <code>.so</code>. קובץ נחשב מפענח אם שמו מתחיל ב-<code>libavcodec</code>, <code>libffmpeg</code>, <code>libvlc</code>, <code>libdav1d</code>, <code>libvpx</code>, <code>libde265</code>, <code>libopenh264</code>, <code>libx264</code> או <code>libmpv</code>, <b>וגם</b> יש בו לפחות 2 מתוך המחרוזות h264, hevc, vp9, vp8, av1, mpeg4, h263 (בבדיקת 4MB הראשונים). אם כן: <code>chmod 000</code>, רישום ב-<code>locked.txt</code> וביומן.</td></tr>
+<tr><td><code>uninstall.sh</code></td><td>755 root</td><td>מחזיר <code>chmod 755</code> לכל נתיב ב-<code>locked.txt</code>. Magisk מריץ אותו בהסרת המודול.</td></tr>
+<tr><td><code>allowlist.txt</code></td><td>644 root</td><td>חבילות שלא ננעלות. כרגע: <code>in.krosbits.musicolet</code>.</td></tr>
+<tr><td><code>locked.txt</code></td><td>644 root</td><td>רשימת הקבצים שננעלו. מצב עכשיו: Vocal remover (<code>libavcodec.so</code>) ו-VLC (<code>libvlc.so</code>, מופיע פעמיים: כפילות קטנה שנשארה, לא משפיעה על ההפעלה).</td></tr>
+<tr><td><code>.stamp</code></td><td>644 root</td><td>קובץ זמן לזיהוי חבילות חדשות.</td></tr>
+</table>
+<div class="note">הקשר SELinux של תיקיית המודול הוגדר ל-<code>u:object_r:system_file:s0</code> (<code>chcon -R</code>).</div>
+
+<h3>2.2 תהליך רץ</h3>
+<p>תהליך <code>sh /data/adb/modules/vsr_block/service.sh</code> (PID 2297 בעת כתיבת הדוח) מופעל עם <code>nohup</code> מהפעלה ידנית שלי. <b>לא נבדק שהוא עולה לבד אחרי אתחול.</b></p>
+
+<h3>2.3 קבצים זמניים ועזר</h3>
+<table>
+<tr><th>נתיב</th><th>מצב</th><th>הערה</th></tr>
+<tr><td><code>/data/local/tmp/vsr_mod/</code> (4 קבצים, הרשאות 666)</td><td>עדיין קיים</td><td>עותק הפריסה של המודול. מומלץ למחוק. הרשאות 666 אומרות שכל אפליקציית shell יכולה לשנות אותו, אבל השירות עצמו רץ מהעותק ב-<code>/data/adb/modules</code> בבעלות root.</td></tr>
+<tr><td><code>/data/local/tmp/vsr.log</code></td><td>קיים (252 בייט)</td><td>יומן נעילות. נוקה פעם אחת על ידי.</td></tr>
+<tr><td><code>/sdcard/Music/vsr_test.mp3</code></td><td>נמחק</td><td>עותק של שיר מתיקיית ההורדות, ליצירת בדיקת ניגון.</td></tr>
+<tr><td><code>/data/app/~~fake==/com.fake.test-AAA==/</code></td><td>נמחק</td><td>חבילה מדומה לבדיקת הנעילה. אומתה מחיקה.</td></tr>
+<tr><td><code>/sdcard/Music/</code></td><td>קיימת</td><td>הרצתי <code>mkdir -p</code>. התיקייה כנראה כבר הייתה קיימת (יש בה <code>VocalRemover</code> שלא יצרתי).</td></tr>
+</table>
+
+<h2>3. שינויים בהרשאות של אפליקציות קיימות</h2>
+<table>
+<tr><th>קובץ</th><th>מצב עכשיו</th><th>מה קרה</th></tr>
+<tr><td>Vocal remover: <code>lib/arm64/libavcodec.so</code></td><td><b>נעול (000)</b></td><td>הוסרה מרשימת החריגים לבקשתך והמודול נעל. סביר שהאפליקציה כבר לא עובדת.</td></tr>
+<tr><td>VLC: <code>lib/arm64/libvlc.so</code></td><td><b>נעול (000)</b></td><td>נעול אוטומטית על ידי המודול, כמה שניות אחרי ההתקנה. אימתתי שהמנוע לא נטען (<code>library "libvlc.so" not found</code>).</td></tr>
+<tr><td>Musicolet: <code>libavcodec.so</code></td><td>755 (תקין)</td><td>נעלתי אותה פעמיים: בפעם הראשונה בטעות (באג בחילוץ שם החבילה, שוחזר ותוקן), ובפעם השנייה בכוונה לבדיקת תלות. בשני המקרים שוחזרה ל-755 ואומת.</td></tr>
+</table>
+
+<h2>4. פעולות בהרצה שלא משאירות קבצים</h2>
+<ul>
+<li>הפעלת Musicolet עם קובץ mp3 (ניגון קצר, נסגר ידנית על ידך).</li>
+<li><code>am force-stop</code> ל-Musicolet, ל-Vocal remover ול-VLC.</li>
+<li>הפעלת VLC (<code>monkey</code>) לבדיקת טעינת המנוע.</li>
+<li><code>logcat -c</code>: ניקוי מאגר הלוג של המכשיר, פעמיים.</li>
+<li>סריקות קריאה בלבד של <code>/data/app</code> לחיפוש מחרוזות מפענחים.</li>
+</ul>
+
+<h2>5. במחשב</h2>
+<table>
+<tr><th>נתיב</th><th>מה זה</th></tr>
+<tr><td><code>C:\Users\user1\AppData\Local\Temp\claude\...\scratchpad\vsr\</code></td><td>4 קבצי המודול (service.sh, module.prop, uninstall.sh, allowlist.txt). המקור לפריסה.</td></tr>
+<tr><td>אותה תיקייה, <code>mk.py</code></td><td>סקריפט ליצירת mp3 לבדיקה. נכשל: <code>python</code> במחשב הוא רק מעטפת של Microsoft Store. ניסיתי <code>pip install lameenc</code>; לא הותקן דבר כי פייתון לא קיים בפועל.</td></tr>
+<tr><td><code>C:\פרוייקטים קלוד\doch_vsr_m393.html</code></td><td>הדוח הזה.</td></tr>
+</table>
+<p>לא שיניתי שום קובץ בתיקיות הפרויקטים שלך, חוץ מהדוח.</p>
+
+<h2>6. מה לא עשיתי</h2>
+<ul>
+<li>לא חסמתי התקנת אפליקציות (<code>pm disable-user</code> על packageinstaller). ביקשת במפורש לא.</li>
+<li>לא הגדרתי Device Owner, חסימת ADB, חסימת איפוס יצרן או VPN חוסם.</li>
+<li>לא נגעתי ב-<code>/vendor/etc</code> ולא ב-<code>/system</code>.</li>
+<li>לא ביצעתי אתחול.</li>
+</ul>
+
+<h2>7. מה לא נבדק</h2>
+<div class="bad">
+<ul>
+<li>עליית המודול אוטומטית אחרי אתחול.</li>
+<li>ניגון mp3 ב-Musicolet בפועל אחרי כל השינויים (ספרייתה פתוחה, אבל לא אימתתי שיר שמתנגן עד הסוף).</li>
+<li>ניגון וידאו אמיתי כלשהו. אין קובץ וידאו במכשיר.</li>
+<li>דפדפנים ו-WebView, שמביאים מפענחים משלהם.</li>
+</ul>
+</div>
+
+<h2>8. מגבלות ידועות של החסימה</h2>
+<div class="note">
+<ul>
+<li>הנעילה היא ברמת קובץ. אי אפשר לחסום רק וידאו ולהשאיר אודיו באותה ספרייה (לכן Musicolet בחריגים, והיא מסוגלת טכנית לפענח וידאו).</li>
+<li>אפליקציה שמורידה מפענח אחרי ההתקנה, מצפינה אותו, או שהמפענח בתוך ספרייה בלי שם מזוהה, תחמוק.</li>
+<li>הסריקה לא רצה על חבילות שהותקנו ב-<code>/data/app</code> בלי תיקיית <code>lib</code> (אפליקציות שמחלצות ספריות אחר כך).</li>
+</ul>
+</div>
+
+<h2>9. איך מחזירים הכול</h2>
+<pre>adb shell
+su
+sh /data/adb/modules/vsr_block/uninstall.sh   # משחזר הרשאות
+pkill -f "vsr_blo[c]k/service.sh"
+rm -rf /data/adb/modules/vsr_block /data/local/tmp/vsr_mod /data/local/tmp/vsr.log
+reboot</pre>
+<p>אם רוצים לשחרר רק אפליקציה אחת: <code>chmod 755</code> על הקובץ הנעול והוספת החבילה ל-<code>allowlist.txt</code>.</p>
+
+<h2>10. המלצות</h2>
+<ul>
+<li>למחוק את <code>/data/local/tmp/vsr_mod</code> (הרשאות 666) ואת VLC, שהיא מותקנת ולא עובדת.</li>
+<li>לאתחל פעם אחת ולוודא ש-<code>service.sh</code> רץ, ושיר ב-Musicolet מתנגן.</li>
+<li>להחליט אם להחליף את Musicolet בנגן שנשען על מפענחי המערכת, כדי לסגור את הפער.</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,12 @@
+09:13:37 start
+09:13:41 OK /system/system_ext/priv-app/MtkSettings/MtkSettings.apk
+09:13:43 OK /system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk
+09:13:44 OK /system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+09:13:46 OK /system/framework/services.jar
+09:13:46 rebooting
+09:14:48 boot completed=True
+09:15:09 check [su -c 'sha256sum /system/framework/servi] => 69cfddf476262ce8358c2ae9d2560de16a6991a8a11e9454a63b965e7e2986de /system/framework/services.jar 40510b3dd6742252e30d9593b162ed37ebe7d7cc98e7830938759131223691c1 /system/system_ext/priv-app/MtkSettings/MtkSettings.apk 123d3d0dc4c35e327901e1055cbb9452f2eedd1af2058b3d835252601074f6ec /system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk a9b524998e1506535adf071e7a28ecc1e3309f240fd6650b4c60241de1ce0cd3 /system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+09:15:09 check [getprop init.svc.orech_vguard] => running
+09:15:09 check [settings get global adb_enabled] => 1
+09:15:10 check [logcat -d | grep -c 'FATAL EXCEPTION'] => 0
+09:15:10 finished4-ok

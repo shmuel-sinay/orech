@@ -1,0 +1,11 @@
+01:19:32 start
+01:19:33 OK /vendor/bin/orech_vguard.sh
+01:19:34 seed => -rwxr-xr-x 1 root root 4540 2025-11-07 15:48 /vendor/bin/orech_vguard.sh C:\Users\user1\AppData\Local\Android\Sdk\platform-tools\adb.exe : cat: /data/system/orech_vguard/allowlist.txtcat: No such file or directory + CategoryInfo : NotSpecified: (cat: /data/syst...le or directory:String) [], RemoteException + FullyQualifiedErrorId : NativeCommandError
+01:19:34 rebooting
+01:20:37 boot seconds=63
+01:20:37 boot completed=True
+01:20:57 check [su -c 'sha256sum /system/framework/servi] => a22df74a1d1025db31407b3f6570264161282d07a7713a71aa9927f9ca3b62b5 /system/framework/services.jar 148367ae660f2ea13ffdbf02fc0e484dfca53fd5f4f3180fc484878028dae6c0 /system/system_ext/priv-app/MtkSettings/MtkSettings.apk 123d3d0dc4c35e327901e1055cbb9452f2eedd1af2058b3d835252601074f6ec /system/system_ext/priv-app/MtkSystemUI/MtkSystemUI.apk bd5100de2182a271171b1048f0616bca0f1ab201d23dad0728e1abfab00ae00b /system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk
+01:20:57 check [getprop init.svc.orech_vguard] => running
+01:20:58 check [settings get global adb_enabled] => 1
+01:20:58 check [logcat -d | grep -c 'FATAL EXCEPTION'] => 0
+01:20:58 finished7-ok

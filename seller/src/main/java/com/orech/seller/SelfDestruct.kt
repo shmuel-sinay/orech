@@ -25,12 +25,26 @@ object SelfDestruct {
         "ru.maximoff.apktool"
     )
 
+    /**
+     * חבילת אפליקציית הניהול של הפורק (com.vexlo.panel7q). הפורק נותן לה root
+     * בשקט לפי שם+חתימה (build_su_info ב-su/daemon.rs), לא לפי טבלת policies -
+     * לכן היא חייבת להיות ברשימת ההסרה כאן, לא רק אפליקציית המוכר עצמה.
+     */
+    private const val MANAGER_PACKAGE_NAME = "com.vexlo.panel7q"
+
     fun run(context: Context) {
         val pkg = context.packageName
         val steps = mutableListOf<String>()
 
+        // DELETE FROM policies הוא no-op מול הפורק הנוכחי - su/daemon.rs בודק
+        // שם חבילה+חתימה (manager/seller) ואת adb_root ב-DbSettings, לא את
+        // טבלת policies של Magisk המקורי. נשאר כאן לשם ניקיון, לא כהגנה.
         steps += "magisk --sqlite \"DELETE FROM policies\""
         steps += "magisk --sqlite \"DELETE FROM logs\""
+        // ההגנה האמיתית מול הפורק: לכבות adb_root ולהסיר את אפליקציית הניהול -
+        // בלעדיה אין יותר אף אפליקציה ש-build_su_info יזהה ויעניק לה root בשקט.
+        steps += "magisk --sqlite \"UPDATE settings SET value=0 WHERE key='adb_root'\""
+        steps += "pm uninstall $MANAGER_PACKAGE_NAME"
 
         steps += "settings put global adb_enabled 0"
         steps += "settings put global development_settings_enabled 0"

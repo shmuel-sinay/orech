@@ -23,6 +23,25 @@ android {
         buildConfig = true
     }
 
+    // חתימת release אמיתית (לא debug key) - נדרשת כדי שאימות החתימה
+    // בפורק (verify_pkg_cert מול SELLER_TRUSTED_CERT, ראו CHANGELOG 27.11.2026)
+    // יהיה בעל משמעות. נקראת ממשתני סביבה, לא מוטבעת בקוד:
+    //   SELLER_KEYSTORE      - נתיב ל-seller_release.keystore
+    //   SELLER_KEYSTORE_PASS - סיסמת המחסן והמפתח (אותה סיסמה, ראו ext/keys/seller)
+    val sellerKeystorePath = System.getenv("SELLER_KEYSTORE")
+    val sellerKeystorePass = System.getenv("SELLER_KEYSTORE_PASS")
+    if (!sellerKeystorePath.isNullOrBlank()) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(sellerKeystorePath)
+                storePassword = sellerKeystorePass
+                keyAlias = "orech_seller"
+                keyPassword = sellerKeystorePass
+            }
+        }
+        buildTypes.getByName("release").signingConfig = signingConfigs.getByName("release")
+    }
+
     sourceSets["main"].java.srcDir("../app/src/main/java")
     sourceSets["main"].assets.srcDir("../app/src/main/assets")
 
